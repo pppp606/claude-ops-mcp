@@ -27,6 +27,7 @@ export class MCPServer {
   private server: Server;
   private serverInfo: Implementation;
   private capabilities: ServerCapabilities;
+  private static readonly SUPPORTED_PROTOCOL_VERSION = '2024-11-05';
 
   constructor() {
     this.serverInfo = {
@@ -47,6 +48,10 @@ export class MCPServer {
 
   private setupHandlers(): void {
     // The SDK handles initialization internally, but we can add custom logic here if needed
+    // TODO: Add request handlers for tools, resources, and prompts
+    // Example: this.server.setRequestHandler('tools/list', this.handleToolsList.bind(this));
+    // Example: this.server.setRequestHandler('resources/list', this.handleResourcesList.bind(this));
+    // Example: this.server.setRequestHandler('prompts/list', this.handlePromptsList.bind(this));
   }
 
   getServer(): Server {
@@ -66,8 +71,11 @@ export class MCPServer {
   }
 
   async handleInitialize(request: InitializeRequest): Promise<InitializeResult> {
+    const requested = request.protocolVersion;
+    const protocolVersion = requested ?? MCPServer.SUPPORTED_PROTOCOL_VERSION;
+    // TODO: Add protocol version validation and error handling for unsupported versions
     return {
-      protocolVersion: request.protocolVersion,
+      protocolVersion,
       serverInfo: this.serverInfo,
       capabilities: this.capabilities,
     };
