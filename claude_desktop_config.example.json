@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "claude-ops-mcp": {
+      "command": "node",
+      "args": ["/path/to/claude-ops-mcp/dist/index.js"],
+      "env": {}
+    }
+  }
+}
