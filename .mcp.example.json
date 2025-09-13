@@ -1,0 +1,15 @@
+{
+  "name": "claude-ops-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for managing Claude Code operation history",
+  "server": {
+    "command": "node",
+    "args": ["dist/index.js"],
+    "env": {}
+  },
+  "capabilities": {
+    "tools": true,
+    "resources": true,
+    "prompts": true
+  }
+}
