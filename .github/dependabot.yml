@@ -19,23 +19,48 @@ updates:
     labels:
       - "dependencies"
       - "automated"
-    
-  # Enable version updates for GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-      day: "monday"
-      time: "09:00" 
-      timezone: "Asia/Tokyo"
-    open-pull-requests-limit: 3
-    reviewers:
-      - "pppp606"
-    assignees:
-      - "pppp606"
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-    labels:
-      - "github-actions"
-      - "automated"
+    # Group development dependencies for easier management
+    groups:
+      development-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "@typescript-eslint/*"
+          - "prettier"
+          - "jest"
+          - "ts-jest"
+      types:
+        patterns:
+          - "@types/*"
+      linting:
+        patterns:
+          - "eslint*"
+          - "@typescript-eslint/*"
+          - "prettier"
+      testing:
+        patterns:
+          - "jest"
+          - "ts-jest"
+          - "@types/jest"
+
+  # GitHub Actions will be managed via SHA pinning and Renovate
+  # Commenting out for now, will be removed after Renovate setup
+  # - package-ecosystem: "github-actions"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "monthly"
+  #     day: "monday"
+  #     time: "09:00"
+  #     timezone: "Asia/Tokyo"
+  #   open-pull-requests-limit: 3
+  #   reviewers:
+  #     - "pppp606"
+  #   assignees:
+  #     - "pppp606"
+  #   commit-message:
+  #     prefix: "ci"
+  #     include: "scope"
+  #   labels:
+  #     - "github-actions"
+  #     - "automated"
