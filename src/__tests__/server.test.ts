@@ -85,8 +85,9 @@ describe('MCPServer', () => {
 
       expect(initResponse).toHaveProperty('metadata');
       expect(initResponse.metadata).toHaveProperty('uid');
-      expect(typeof initResponse.metadata!.uid).toBe('string');
-      expect(initResponse.metadata!.uid.length).toBeGreaterThan(0);
+      expect(initResponse.metadata).toBeDefined();
+      expect(typeof initResponse.metadata?.uid).toBe('string');
+      expect(initResponse.metadata?.uid.length).toBeGreaterThan(0);
     });
 
     it('should generate different UIDs for different server instances', async () => {
@@ -110,7 +111,9 @@ describe('MCPServer', () => {
         },
       });
 
-      expect(initResponse1.metadata!.uid).not.toBe(initResponse2.metadata!.uid);
+      expect(initResponse1.metadata).toBeDefined();
+      expect(initResponse2.metadata).toBeDefined();
+      expect(initResponse1.metadata?.uid).not.toBe(initResponse2.metadata?.uid);
     });
 
     it('should return supported protocol version', async () => {

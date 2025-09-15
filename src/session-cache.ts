@@ -1,4 +1,4 @@
-interface SessionInfo {
+export interface SessionInfo {
   sessionFile: string;
   projectHash: string;
   sessionId: string;
@@ -9,7 +9,7 @@ interface CacheEntry {
   timestamp: number;
 }
 
-interface CacheStats {
+export interface CacheStats {
   hits: number;
   misses: number;
   hitRate: number;

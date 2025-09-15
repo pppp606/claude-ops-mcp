@@ -52,7 +52,7 @@ describe('SessionDiscovery', () => {
     });
 
     it('should return null if UID is not found in any session', async () => {
-      const claudeProjectsPath = path.join(mockHomedir, '.claude', 'projects');
+      const _claudeProjectsPath = path.join(mockHomedir, '.claude', 'projects');
 
       (fs.readdir as jest.Mock)
         .mockResolvedValueOnce([mockProjectHash])
@@ -169,8 +169,8 @@ describe('SessionDiscovery', () => {
     });
 
     it('should clear cache when requested', async () => {
-      const claudeProjectsPath = path.join(mockHomedir, '.claude', 'projects');
-      const projectPath = path.join(claudeProjectsPath, mockProjectHash);
+      const _claudeProjectsPath = path.join(mockHomedir, '.claude', 'projects');
+      const _projectPath = path.join(_claudeProjectsPath, mockProjectHash);
       const sessionFile = `${mockSessionId}.jsonl`;
 
       (fs.readdir as jest.Mock)

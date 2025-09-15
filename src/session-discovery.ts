@@ -2,12 +2,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import { SessionCache } from './session-cache';
-
-interface SessionInfo {
-  sessionFile: string;
-  projectHash: string;
-  sessionId: string;
-}
+import type { SessionInfo, CacheStats } from './session-cache';
 
 export class SessionDiscovery {
   private claudeProjectsPath: string;
@@ -102,7 +97,7 @@ export class SessionDiscovery {
     }
   }
 
-  getCacheStats() {
+  getCacheStats(): CacheStats {
     return this.cache.getStats();
   }
 
