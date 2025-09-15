@@ -1,7 +1,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
-import { UIDManager } from './uid-manager';
+import { UIDManager } from './uid-manager.js';
 
 interface ServerCapabilities {
   tools?: Record<string, unknown>;
