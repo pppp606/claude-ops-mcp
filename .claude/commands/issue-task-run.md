@@ -37,14 +37,18 @@ description: Github Issueからタスクを実行し、プルリクエスト作�
 
 1. **ビルド・実行・確認**:
    ```bash
+   npm run clean                    # 既存成果物をクリア（必須）
    npm run build                    # TypeScriptをコンパイル
    node dist/index.js [command]     # 実際のCLI動作確認
    # ESモジュール実行テスト（Node.js環境確認）
    node -e "import('./dist/index.js').then(() => console.log('✅ ES module import OK')).catch(err => { console.error('❌ ES module error:', err.message); process.exit(1); })"
+   # stdin入力テスト（実際の使用パターン） - macOSではgtimeout、Linuxではtimeout
+   echo '{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}' | (timeout 3s node dist/index.js 2>/dev/null || gtimeout 3s node dist/index.js 2>/dev/null || echo "✅ CLI execution OK")
    ```
 
 2. **品質チェック** (コミット前必須):
    ```bash
+   npx jest --clearCache           # Jestキャッシュクリア（CI環境模擬）
    npm run typecheck               # TypeScript型チェック
    npm run lint                    # ESLint準拠確認
    npm test                        # テスト実行
@@ -63,6 +67,8 @@ description: Github Issueからタスクを実行し、プルリクエスト作�
 - ユーザー向け機能は手動確認が不可欠
 - ESモジュールの依存関係はCI環境でのみ検出される場合がある
 - カバレッジテストで隠れた依存関係問題を発見できる
+- **クリーンビルドでキャッシュや古い成果物による誤判定を防止**
+- **Jestキャッシュクリアでテスト環境とCI環境の状態を統一**
 
 ### テストの実行
 
@@ -77,6 +83,32 @@ description: Github Issueからタスクを実行し、プルリクエスト作�
 - **言語**: Node.js + TypeScript (ES modules)
 - **テスト**: jest + ts-jest
 - **品質**: eslint + prettier
+
+### CI環境同等テストのポイント
+
+**重要**: 以下の点でローカル環境とCI環境で差が生じやすい
+
+1. **キャッシュの影響**:
+   - `npm run clean` でビルド成果物をクリア（0.1秒程度）
+   - `npx jest --clearCache` でJestキャッシュをクリア
+
+2. **ESモジュール拡張子**:
+   - ビルド後のdistファイルに`.js`拡張子が正しく追加されているか
+   - `fix-imports.js`スクリプトが正常動作しているか
+
+3. **依存関係**:
+   - カバレッジテスト実行時にのみ必要な依存関係の不足
+   - `npm test -- --coverage --watchAll=false` で検出
+
+4. **実行環境**:
+   - 実際のNode.js実行での動作確認
+   - stdin入力を伴うCLI動作の確認
+
+**clean実行タイミング**:
+- 構造的変更時（ファイル追加/削除、インポート変更）
+- CI環境で問題発生時
+- 依存関係変更時（package.json等）
+- 疑わしい時は迷わず実行（コストは0.1秒程度）
 
 ## 処理フロー
 
@@ -104,10 +136,13 @@ description: Github Issueからタスクを実行し、プルリクエスト作�
 - 各タスクを順次実行
 - TDD実装ルールに従い、テストファーストで開発
 - **必須**: コード変更毎にBuild-Test-Execute Cycleを実行
-  1. `npm run build` でビルド
-  2. `node dist/index.js [command]` で実際動作確認
-  3. ESモジュール実行テスト実行
-  4. 品質チェック (`typecheck`, `lint`, `test`, カバレッジテスト) を実行
+  1. `npm run clean` でクリーンアップ
+  2. `npm run build` でビルド
+  3. `node dist/index.js [command]` で実際動作確認
+  4. ESモジュール実行テスト実行
+  5. stdin入力テスト実行
+  6. `npx jest --clearCache` でキャッシュクリア
+  7. 品質チェック (`typecheck`, `lint`, `test`, カバレッジテスト) を実行
 - 完了後にコミット・プッシュ
 - PRチェックリストを更新（ `- [ ]` → `- [x]` ）
 - 完了日と関連ファイルを記載
