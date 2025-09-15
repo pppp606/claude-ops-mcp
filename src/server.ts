@@ -1,6 +1,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
+import { UIDManager } from './uid-manager';
 
 interface ServerCapabilities {
   tools?: Record<string, unknown>;
@@ -21,12 +22,17 @@ interface InitializeResult {
   protocolVersion: string;
   serverInfo: Implementation;
   capabilities: ServerCapabilities;
+  metadata?: {
+    uid: string;
+    timestamp?: number;
+  };
 }
 
 export class MCPServer {
   private server: Server;
   private serverInfo: Implementation;
   private capabilities: ServerCapabilities;
+  private uidManager: UIDManager;
   private static readonly SUPPORTED_PROTOCOL_VERSION = '2024-11-05';
 
   constructor() {
@@ -42,6 +48,7 @@ export class MCPServer {
     };
 
     this.server = new Server(this.serverInfo);
+    this.uidManager = new UIDManager();
 
     this.setupHandlers();
   }
@@ -73,11 +80,23 @@ export class MCPServer {
   async handleInitialize(request: InitializeRequest): Promise<InitializeResult> {
     const requested = request.protocolVersion;
     const protocolVersion = requested ?? MCPServer.SUPPORTED_PROTOCOL_VERSION;
+
+    // Generate and store UID for this session
+    const uid = this.uidManager.initialize();
+    const metadata = this.uidManager.getMetadata();
+
+    // Log UID to stdout so it appears in Claude Code logs
+    console.error(`[claude-ops-mcp] Session UID: ${uid}`);
+
     // TODO: Add protocol version validation and error handling for unsupported versions
     return {
       protocolVersion,
       serverInfo: this.serverInfo,
       capabilities: this.capabilities,
+      metadata: {
+        uid: metadata.uid,
+        timestamp: metadata.timestamp,
+      },
     };
   }
 

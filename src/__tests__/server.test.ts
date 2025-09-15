@@ -72,6 +72,47 @@ describe('MCPServer', () => {
       expect(initResponse).toHaveProperty('capabilities');
     });
 
+    it('should include UID in initialization response', async () => {
+      const server = new MCPServer();
+      const initResponse = await server.handleInitialize({
+        protocolVersion: '2024-11-05',
+        capabilities: {},
+        clientInfo: {
+          name: 'test-client',
+          version: '1.0.0',
+        },
+      });
+
+      expect(initResponse).toHaveProperty('metadata');
+      expect(initResponse.metadata).toHaveProperty('uid');
+      expect(typeof initResponse.metadata!.uid).toBe('string');
+      expect(initResponse.metadata!.uid.length).toBeGreaterThan(0);
+    });
+
+    it('should generate different UIDs for different server instances', async () => {
+      const server1 = new MCPServer();
+      const initResponse1 = await server1.handleInitialize({
+        protocolVersion: '2024-11-05',
+        capabilities: {},
+        clientInfo: {
+          name: 'test-client',
+          version: '1.0.0',
+        },
+      });
+
+      const server2 = new MCPServer();
+      const initResponse2 = await server2.handleInitialize({
+        protocolVersion: '2024-11-05',
+        capabilities: {},
+        clientInfo: {
+          name: 'test-client',
+          version: '1.0.0',
+        },
+      });
+
+      expect(initResponse1.metadata!.uid).not.toBe(initResponse2.metadata!.uid);
+    });
+
     it('should return supported protocol version', async () => {
       const server = new MCPServer();
       const initResponse = await server.handleInitialize({
