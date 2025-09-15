@@ -11,6 +11,7 @@ jest.mock('@modelcontextprotocol/sdk/server/stdio', () => ({
 }));
 
 import { MCPServer } from '../server';
+import { UIDManager } from '../uid-manager';
 
 describe('MCPServer', () => {
   describe('initialization', () => {
@@ -72,9 +73,11 @@ describe('MCPServer', () => {
       expect(initResponse).toHaveProperty('capabilities');
     });
 
-    it('should include UID in initialization response', async () => {
+    it('should log UID during initialization', async () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
       const server = new MCPServer();
-      const initResponse = await server.handleInitialize({
+
+      await server.handleInitialize({
         protocolVersion: '2024-11-05',
         capabilities: {},
         clientInfo: {
@@ -83,16 +86,21 @@ describe('MCPServer', () => {
         },
       });
 
-      expect(initResponse).toHaveProperty('metadata');
-      expect(initResponse.metadata).toHaveProperty('uid');
-      expect(initResponse.metadata).toBeDefined();
-      expect(typeof initResponse.metadata?.uid).toBe('string');
-      expect(initResponse.metadata?.uid.length).toBeGreaterThan(0);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/\[claude-ops-mcp\] Session UID: [0-9a-f-]{36}/)
+      );
+
+      consoleSpy.mockRestore();
     });
 
-    it('should generate different UIDs for different server instances', async () => {
-      const server1 = new MCPServer();
-      const initResponse1 = await server1.handleInitialize({
+    it('should set global UID during initialization', async () => {
+      const server = new MCPServer();
+
+      // Clear any existing UID
+      UIDManager.setCurrentUID('');
+      expect(UIDManager.getCurrentUID()).toBe('');
+
+      await server.handleInitialize({
         protocolVersion: '2024-11-05',
         capabilities: {},
         clientInfo: {
@@ -101,19 +109,10 @@ describe('MCPServer', () => {
         },
       });
 
-      const server2 = new MCPServer();
-      const initResponse2 = await server2.handleInitialize({
-        protocolVersion: '2024-11-05',
-        capabilities: {},
-        clientInfo: {
-          name: 'test-client',
-          version: '1.0.0',
-        },
-      });
-
-      expect(initResponse1.metadata).toBeDefined();
-      expect(initResponse2.metadata).toBeDefined();
-      expect(initResponse1.metadata?.uid).not.toBe(initResponse2.metadata?.uid);
+      const currentUID = UIDManager.getCurrentUID();
+      expect(currentUID).toBeTruthy();
+      expect(typeof currentUID).toBe('string');
+      expect(currentUID?.length).toBeGreaterThan(0);
     });
 
     it('should return supported protocol version', async () => {

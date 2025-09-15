@@ -19,11 +19,16 @@ async function fixImports(dir) {
     } else if (entry.name.endsWith('.js')) {
       const content = await readFile(fullPath, 'utf-8');
 
-      // Fix relative imports by adding .js extension
+      // Fix relative imports by adding appropriate extensions
       const fixedContent = content.replace(
         /from\s+['"](\.\S+?)['"];/g,
         (match, importPath) => {
-          if (!importPath.endsWith('.js')) {
+          if (!importPath.includes('.') || (!importPath.endsWith('.js') && !importPath.endsWith('.mjs') && !importPath.endsWith('.cjs'))) {
+            // Handle directory imports (./foo -> ./foo/index.js)
+            if (importPath.endsWith('/')) {
+              return match.replace(importPath, `${importPath}index.js`);
+            }
+            // Handle module imports (./foo -> ./foo.js)
             return match.replace(importPath, `${importPath}.js`);
           }
           return match;
@@ -31,7 +36,12 @@ async function fixImports(dir) {
       ).replace(
         /import\s*\(\s*['"](\.\S+?)['"]\s*\)/g,
         (match, importPath) => {
-          if (!importPath.endsWith('.js')) {
+          if (!importPath.includes('.') || (!importPath.endsWith('.js') && !importPath.endsWith('.mjs') && !importPath.endsWith('.cjs'))) {
+            // Handle directory imports (./foo -> ./foo/index.js)
+            if (importPath.endsWith('/')) {
+              return match.replace(importPath, `${importPath}index.js`);
+            }
+            // Handle module imports (./foo -> ./foo.js)
             return match.replace(importPath, `${importPath}.js`);
           }
           return match;

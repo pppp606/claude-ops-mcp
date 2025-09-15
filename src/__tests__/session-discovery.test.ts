@@ -1,9 +1,13 @@
 import { SessionDiscovery } from '../session-discovery';
 import * as fs from 'fs/promises';
+import * as fsSync from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import * as readline from 'readline';
 
 jest.mock('fs/promises');
+jest.mock('fs');
+jest.mock('readline');
 jest.mock('os');
 
 describe('SessionDiscovery', () => {
@@ -15,6 +19,23 @@ describe('SessionDiscovery', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (os.homedir as jest.Mock).mockReturnValue(mockHomedir);
+
+    // Mock readline interface
+    const mockRl = {
+      close: jest.fn(),
+      [Symbol.asyncIterator]: async function* () {
+        // This will be customized per test
+      }
+    };
+
+    (readline.createInterface as jest.Mock).mockReturnValue(mockRl);
+
+    // Mock createReadStream
+    const mockStream = {
+      close: jest.fn()
+    };
+
+    (fsSync.createReadStream as jest.Mock).mockReturnValue(mockStream);
   });
 
   describe('findSessionByUID', () => {
@@ -24,22 +45,31 @@ describe('SessionDiscovery', () => {
       const sessionFile = `${mockSessionId}.jsonl`;
       const sessionFilePath = path.join(projectPath, sessionFile);
 
-      (fs.readdir as jest.Mock)
-        .mockResolvedValueOnce([mockProjectHash]) // List of project directories
-        .mockResolvedValueOnce([sessionFile, 'other-session.jsonl']); // Session files in project
+      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
+      const mockSessionDirent = { name: sessionFile, isDirectory: (): boolean => false, isFile: (): boolean => true };
+      const mockOtherSessionDirent = { name: 'other-session.jsonl', isDirectory: (): boolean => false, isFile: (): boolean => true };
 
-      const mockLogContent = [
+      (fs.readdir as jest.Mock)
+        .mockResolvedValueOnce([mockProjectDirent]) // List of project directories
+        .mockResolvedValueOnce([mockSessionDirent, mockOtherSessionDirent]); // Session files in project
+
+      const mockLogLines = [
         '{"timestamp": 1234567890, "type": "init", "data": {}}',
         `{"timestamp": 1234567891, "type": "server_response", "data": {"metadata": {"uid": "${mockUID}"}}}`,
         '{"timestamp": 1234567892, "type": "request", "data": {}}',
-      ].join('\n');
+      ];
 
-      (fs.readFile as jest.Mock).mockImplementation((filePath: string) => {
-        if (filePath === sessionFilePath) {
-          return Promise.resolve(mockLogContent);
+      // Mock the readline interface for this specific test
+      const mockRl = {
+        close: jest.fn(),
+        [Symbol.asyncIterator]: async function* () {
+          for (const line of mockLogLines) {
+            yield line;
+          }
         }
-        return Promise.resolve('{"type": "other", "data": {}}');
-      });
+      };
+
+      (readline.createInterface as jest.Mock).mockReturnValue(mockRl);
 
       const discovery = new SessionDiscovery();
       const result = await discovery.findSessionByUID(mockUID);
@@ -54,11 +84,23 @@ describe('SessionDiscovery', () => {
     it('should return null if UID is not found in any session', async () => {
       const _claudeProjectsPath = path.join(mockHomedir, '.claude', 'projects');
 
-      (fs.readdir as jest.Mock)
-        .mockResolvedValueOnce([mockProjectHash])
-        .mockResolvedValueOnce(['session1.jsonl', 'session2.jsonl']);
+      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
+      const mockSession1Dirent = { name: 'session1.jsonl', isDirectory: (): boolean => false, isFile: (): boolean => true };
+      const mockSession2Dirent = { name: 'session2.jsonl', isDirectory: (): boolean => false, isFile: (): boolean => true };
 
-      (fs.readFile as jest.Mock).mockResolvedValue('{"type": "other", "data": {}}');
+      (fs.readdir as jest.Mock)
+        .mockResolvedValueOnce([mockProjectDirent])
+        .mockResolvedValueOnce([mockSession1Dirent, mockSession2Dirent]);
+
+      // Mock the readline interface to return empty results
+      const mockRl = {
+        close: jest.fn(),
+        [Symbol.asyncIterator]: async function* () {
+          yield '{"type": "other", "data": {}}';
+        }
+      };
+
+      (readline.createInterface as jest.Mock).mockReturnValue(mockRl);
 
       const discovery = new SessionDiscovery();
       const result = await discovery.findSessionByUID('non-existent-uid');
@@ -81,17 +123,30 @@ describe('SessionDiscovery', () => {
       const sessionFile = `${mockSessionId}.jsonl`;
       const sessionFilePath = path.join(projectPath, sessionFile);
 
-      (fs.readdir as jest.Mock)
-        .mockResolvedValueOnce([mockProjectHash])
-        .mockResolvedValueOnce([sessionFile]);
+      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
+      const mockSessionDirent = { name: sessionFile, isDirectory: (): boolean => false, isFile: (): boolean => true };
 
-      const mockLogContent = [
+      (fs.readdir as jest.Mock)
+        .mockResolvedValueOnce([mockProjectDirent])
+        .mockResolvedValueOnce([mockSessionDirent]);
+
+      const mockLogLines = [
         'invalid json line',
         `{"timestamp": 1234567891, "type": "server_response", "data": {"metadata": {"uid": "${mockUID}"}}}`,
         '{"timestamp": 1234567892, "type": "request", "data": {}}',
-      ].join('\n');
+      ];
 
-      (fs.readFile as jest.Mock).mockResolvedValue(mockLogContent);
+      // Mock the readline interface for this specific test
+      const mockRl = {
+        close: jest.fn(),
+        [Symbol.asyncIterator]: async function* () {
+          for (const line of mockLogLines) {
+            yield line;
+          }
+        }
+      };
+
+      (readline.createInterface as jest.Mock).mockReturnValue(mockRl);
 
       const discovery = new SessionDiscovery();
       const result = await discovery.findSessionByUID(mockUID);
@@ -130,12 +185,27 @@ describe('SessionDiscovery', () => {
       const sessionFile = `${mockSessionId}.jsonl`;
       const sessionFilePath = path.join(projectPath, sessionFile);
 
-      (fs.readdir as jest.Mock)
-        .mockResolvedValueOnce([mockProjectHash])
-        .mockResolvedValueOnce([sessionFile]);
+      // Mock directory entries with file type information
+      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
+      const mockFileDirent = { name: sessionFile, isDirectory: (): boolean => false, isFile: (): boolean => true };
 
-      const mockLogContent = `{"timestamp": 1234567891, "type": "server_response", "data": {"metadata": {"uid": "${mockUID}"}}}`;
-      (fs.readFile as jest.Mock).mockResolvedValue(mockLogContent);
+      (fs.readdir as jest.Mock)
+        .mockResolvedValueOnce([mockProjectDirent])
+        .mockResolvedValueOnce([mockFileDirent]);
+
+      const mockLogLines = [`{"timestamp": 1234567891, "type": "server_response", "data": {"metadata": {"uid": "${mockUID}"}}}`];
+
+      // Mock the readline interface for this specific test
+      const mockRl = {
+        close: jest.fn(),
+        [Symbol.asyncIterator]: async function* () {
+          for (const line of mockLogLines) {
+            yield line;
+          }
+        }
+      };
+
+      (readline.createInterface as jest.Mock).mockReturnValue(mockRl);
 
       const discovery = new SessionDiscovery();
 
@@ -173,12 +243,28 @@ describe('SessionDiscovery', () => {
       const _projectPath = path.join(_claudeProjectsPath, mockProjectHash);
       const sessionFile = `${mockSessionId}.jsonl`;
 
-      (fs.readdir as jest.Mock)
-        .mockResolvedValue([mockProjectHash])
-        .mockResolvedValue([sessionFile]);
+      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
+      const mockSessionDirent = { name: sessionFile, isDirectory: (): boolean => false, isFile: (): boolean => true };
 
-      const mockLogContent = `{"timestamp": 1234567891, "type": "server_response", "data": {"metadata": {"uid": "${mockUID}"}}}`;
-      (fs.readFile as jest.Mock).mockResolvedValue(mockLogContent);
+      (fs.readdir as jest.Mock)
+        .mockResolvedValueOnce([mockProjectDirent])
+        .mockResolvedValueOnce([mockSessionDirent])
+        .mockResolvedValueOnce([mockProjectDirent])
+        .mockResolvedValueOnce([mockSessionDirent]);
+
+      const mockLogLines = [`{"timestamp": 1234567891, "type": "server_response", "data": {"metadata": {"uid": "${mockUID}"}}}`];
+
+      // Mock the readline interface for this specific test
+      const mockRl = {
+        close: jest.fn(),
+        [Symbol.asyncIterator]: async function* () {
+          for (const line of mockLogLines) {
+            yield line;
+          }
+        }
+      };
+
+      (readline.createInterface as jest.Mock).mockReturnValue(mockRl);
 
       const discovery = new SessionDiscovery();
 
@@ -193,6 +279,94 @@ describe('SessionDiscovery', () => {
 
       // Both calls should have hit the filesystem
       expect(fs.readdir).toHaveBeenCalledTimes(4); // 2 calls per findSessionByUID
+    });
+  });
+
+  describe('file type filtering', () => {
+    it('should skip non-directory entries in projects folder', async () => {
+      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
+      const mockFileDirent = { name: 'some-file.txt', isDirectory: (): boolean => false, isFile: (): boolean => true };
+
+      (fs.readdir as jest.Mock).mockResolvedValueOnce([mockProjectDirent, mockFileDirent]);
+
+      const discovery = new SessionDiscovery();
+      const result = await discovery.findSessionByUID(mockUID);
+
+      // Should have only processed the directory, not the file
+      expect(fs.readdir).toHaveBeenCalledTimes(2); // Once for projects, once for the directory
+      expect(result).toBeNull();
+    });
+
+    it('should skip non-file entries in project directories', async () => {
+      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
+      const mockSubDirDirent = { name: 'subdirectory', isDirectory: (): boolean => true, isFile: (): boolean => false };
+      const mockFileDirent = { name: 'session.jsonl', isDirectory: (): boolean => false, isFile: (): boolean => true };
+
+      (fs.readdir as jest.Mock)
+        .mockResolvedValueOnce([mockProjectDirent])
+        .mockResolvedValueOnce([mockSubDirDirent, mockFileDirent]);
+
+      const mockLogLines = [`{"timestamp": 1234567891, "type": "server_response", "data": {"metadata": {"uid": "${mockUID}"}}}`];
+
+      // Mock the readline interface for this specific test
+      const mockRl = {
+        close: jest.fn(),
+        [Symbol.asyncIterator]: async function* () {
+          for (const line of mockLogLines) {
+            yield line;
+          }
+        }
+      };
+
+      (readline.createInterface as jest.Mock).mockReturnValue(mockRl);
+
+      const discovery = new SessionDiscovery();
+      const result = await discovery.findSessionByUID(mockUID);
+
+      // Should have found the UID in the file, not the subdirectory
+      expect(result).toBeTruthy();
+      expect(result?.sessionId).toBe('session');
+    });
+
+    it('should skip non-jsonl files', async () => {
+      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
+      const mockTxtFile = { name: 'readme.txt', isDirectory: (): boolean => false, isFile: (): boolean => true };
+      const mockJsonFile = { name: 'config.json', isDirectory: (): boolean => false, isFile: (): boolean => true };
+
+      (fs.readdir as jest.Mock)
+        .mockResolvedValueOnce([mockProjectDirent])
+        .mockResolvedValueOnce([mockTxtFile, mockJsonFile]);
+
+      const discovery = new SessionDiscovery();
+      const result = await discovery.findSessionByUID(mockUID);
+
+      // Should not have attempted to read non-jsonl files
+      expect(fs.readFile).not.toHaveBeenCalled();
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('configurable cache TTL', () => {
+    it('should accept custom cache TTL', () => {
+      const customTTL = 30 * 60 * 1000; // 30 minutes
+      const discovery = new SessionDiscovery(customTTL);
+
+      expect(discovery).toBeInstanceOf(SessionDiscovery);
+    });
+
+    it('should use environment variable for cache TTL', () => {
+      const originalEnv = process.env['CLAUDE_OPS_CACHE_TTL_MS'];
+      process.env['CLAUDE_OPS_CACHE_TTL_MS'] = '600000'; // 10 minutes
+
+      const discovery = new SessionDiscovery();
+      expect(discovery).toBeInstanceOf(SessionDiscovery);
+
+      // Restore original environment
+      if (originalEnv !== undefined) {
+        process.env['CLAUDE_OPS_CACHE_TTL_MS'] = originalEnv;
+      } else {
+        delete process.env['CLAUDE_OPS_CACHE_TTL_MS'];
+      }
     });
   });
 });

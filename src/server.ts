@@ -22,10 +22,6 @@ interface InitializeResult {
   protocolVersion: string;
   serverInfo: Implementation;
   capabilities: ServerCapabilities;
-  metadata?: {
-    uid: string;
-    timestamp?: number;
-  };
 }
 
 export class MCPServer {
@@ -86,17 +82,16 @@ export class MCPServer {
     const metadata = this.uidManager.getMetadata();
 
     // Log UID to stdout so it appears in Claude Code logs
-    console.error(`[claude-ops-mcp] Session UID: ${uid}`);
+    console.log(`[claude-ops-mcp] Session UID: ${uid}`);
+
+    // Store UID globally for future access
+    UIDManager.setCurrentUID(uid);
 
     // TODO: Add protocol version validation and error handling for unsupported versions
     return {
       protocolVersion,
       serverInfo: this.serverInfo,
       capabilities: this.capabilities,
-      metadata: {
-        uid: metadata.uid,
-        timestamp: metadata.timestamp,
-      },
     };
   }
 
