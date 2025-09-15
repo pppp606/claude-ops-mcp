@@ -1,8 +1,8 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
-import { SessionCache } from './session-cache.js';
-import type { SessionInfo, CacheStats } from './session-cache.js';
+import { SessionCache } from './session-cache';
+import type { SessionInfo, CacheStats } from './session-cache';
 
 export class SessionDiscovery {
   private claudeProjectsPath: string;
