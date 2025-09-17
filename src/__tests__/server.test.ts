@@ -11,6 +11,7 @@ jest.mock('@modelcontextprotocol/sdk/server/stdio', () => ({
 }));
 
 import { MCPServer } from '../server';
+import { UIDManager } from '../uid-manager';
 
 describe('MCPServer', () => {
   describe('initialization', () => {
@@ -70,6 +71,48 @@ describe('MCPServer', () => {
       expect(initResponse).toHaveProperty('serverInfo');
       expect(initResponse.serverInfo.name).toBe('claude-ops-mcp');
       expect(initResponse).toHaveProperty('capabilities');
+    });
+
+    it('should log UID during initialization', async () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const server = new MCPServer();
+
+      await server.handleInitialize({
+        protocolVersion: '2024-11-05',
+        capabilities: {},
+        clientInfo: {
+          name: 'test-client',
+          version: '1.0.0',
+        },
+      });
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/\[claude-ops-mcp\] Session UID: [0-9a-f-]{36}/)
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should set global UID during initialization', async () => {
+      const server = new MCPServer();
+
+      // Clear any existing UID
+      UIDManager.setCurrentUID('');
+      expect(UIDManager.getCurrentUID()).toBe('');
+
+      await server.handleInitialize({
+        protocolVersion: '2024-11-05',
+        capabilities: {},
+        clientInfo: {
+          name: 'test-client',
+          version: '1.0.0',
+        },
+      });
+
+      const currentUID = UIDManager.getCurrentUID();
+      expect(currentUID).toBeTruthy();
+      expect(typeof currentUID).toBe('string');
+      expect(currentUID?.length).toBeGreaterThan(0);
     });
 
     it('should return supported protocol version', async () => {
