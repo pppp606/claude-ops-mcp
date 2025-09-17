@@ -1,4 +1,4 @@
-import { LogParser } from './log-parser';
+import { LogParser, LogParseError } from './log-parser';
 import { ChangeType } from '../types/operation-index';
 
 describe('LogParser', () => {
@@ -134,19 +134,53 @@ describe('LogParser', () => {
       expect(result.changeType).toBe(ChangeType.UPDATE);
     });
 
-    it('should throw error for malformed JSON', () => {
+    it('should throw LogParseError for malformed JSON', () => {
       const malformedJson = '{ invalid json }';
 
+      expect(() => LogParser.parseLogEntry(malformedJson)).toThrow(LogParseError);
       expect(() => LogParser.parseLogEntry(malformedJson)).toThrow('Invalid JSON format');
     });
 
-    it('should throw error for missing required fields', () => {
+    it('should throw LogParseError for missing required fields', () => {
       const incompleteEntry = JSON.stringify({
         tool: 'Edit'
         // missing timestamp and parameters
       });
 
-      expect(() => LogParser.parseLogEntry(incompleteEntry)).toThrow('Missing required fields');
+      expect(() => LogParser.parseLogEntry(incompleteEntry)).toThrow(LogParseError);
+      expect(() => LogParser.parseLogEntry(incompleteEntry)).toThrow('Missing required field: timestamp');
+    });
+
+    it('should validate timestamp format when requested', () => {
+      const entryWithBadTimestamp = JSON.stringify({
+        timestamp: 'invalid-timestamp',
+        tool: 'Edit',
+        parameters: { file_path: '/file.ts', old_string: 'old', new_string: 'new' },
+        result: 'success'
+      });
+
+      expect(() => LogParser.parseLogEntry(entryWithBadTimestamp, { validateTimestamp: true }))
+        .toThrow(LogParseError);
+    });
+
+    it('should accept valid ISO 8601 timestamps when validation is enabled', () => {
+      const validTimestamps = [
+        '2024-01-01T10:00:00.000Z',
+        '2024-01-01T10:00:00Z',
+        '2024-01-01T10:00:00.123Z'
+      ];
+
+      for (const timestamp of validTimestamps) {
+        const entry = JSON.stringify({
+          timestamp,
+          tool: 'Edit',
+          parameters: { file_path: '/file.ts', old_string: 'old', new_string: 'new' },
+          result: 'success'
+        });
+
+        expect(() => LogParser.parseLogEntry(entry, { validateTimestamp: true }))
+          .not.toThrow();
+      }
     });
 
     it('should handle log entry with unknown tool type', () => {
@@ -332,6 +366,146 @@ describe('LogParser', () => {
       expect(results[0]!.timestamp).toBe('2024-01-01T10:02:00.000Z');
       expect(results[1]!.timestamp).toBe('2024-01-01T10:00:00.000Z');
       expect(results[2]!.timestamp).toBe('2024-01-01T10:01:00.000Z');
+    });
+
+    it('should respect maxEntries option', () => {
+      const jsonlContent = [
+        JSON.stringify({
+          timestamp: '2024-01-01T10:00:00.000Z',
+          tool: 'Edit',
+          parameters: { file_path: '/file1.ts', old_string: 'old', new_string: 'new' },
+          result: 'success'
+        }),
+        JSON.stringify({
+          timestamp: '2024-01-01T10:01:00.000Z',
+          tool: 'Write',
+          parameters: { file_path: '/file2.ts', content: 'content' },
+          result: 'success'
+        }),
+        JSON.stringify({
+          timestamp: '2024-01-01T10:02:00.000Z',
+          tool: 'Read',
+          parameters: { file_path: '/file3.ts' },
+          result: 'content'
+        })
+      ].join('\n');
+
+      const results = LogParser.parseLogStream(jsonlContent, { maxEntries: 2 });
+      expect(results).toHaveLength(2);
+    });
+
+    it('should throw detailed errors when skipMalformed is false', () => {
+      const jsonlContent = [
+        JSON.stringify({
+          timestamp: '2024-01-01T10:00:00.000Z',
+          tool: 'Edit',
+          parameters: { file_path: '/file.ts', old_string: 'old', new_string: 'new' },
+          result: 'success'
+        }),
+        '{ invalid json }'
+      ].join('\n');
+
+      expect(() => LogParser.parseLogStream(jsonlContent, { skipMalformed: false }))
+        .toThrow(LogParseError);
+    });
+  });
+
+  describe('parseLogStreamWithMetadata', () => {
+    it('should return metadata about the parsing process', () => {
+      const jsonlContent = [
+        JSON.stringify({
+          timestamp: '2024-01-01T10:00:00.000Z',
+          tool: 'Edit',
+          parameters: { file_path: '/file.ts', old_string: 'old', new_string: 'new' },
+          result: 'success'
+        }),
+        '{ invalid json }',
+        JSON.stringify({
+          timestamp: '2024-01-01T10:01:00.000Z',
+          tool: 'Write',
+          parameters: { file_path: '/file2.ts', content: 'content' },
+          result: 'success'
+        })
+      ].join('\n');
+
+      const result = LogParser.parseLogStreamWithMetadata(jsonlContent);
+
+      expect(result.operations).toHaveLength(2);
+      expect(result.skippedCount).toBe(1);
+      expect(result.totalProcessed).toBe(3);
+    });
+  });
+
+  describe('utility methods', () => {
+    const sampleOperations = [
+      {
+        id: '1',
+        timestamp: '2024-01-01T10:00:00.000Z',
+        tool: 'Edit',
+        filePath: '/file1.ts',
+        summary: 'Edit file1',
+        changeType: ChangeType.UPDATE
+      },
+      {
+        id: '2',
+        timestamp: '2024-01-01T11:00:00.000Z',
+        tool: 'Write',
+        filePath: '/file2.ts',
+        summary: 'Write file2',
+        changeType: ChangeType.CREATE
+      },
+      {
+        id: '3',
+        timestamp: '2024-01-01T12:00:00.000Z',
+        tool: 'Read',
+        filePath: '/file1.ts',
+        summary: 'Read file1',
+        changeType: ChangeType.READ
+      },
+      {
+        id: '4',
+        timestamp: '2024-01-01T13:00:00.000Z',
+        tool: 'Bash',
+        summary: 'Bash command',
+        changeType: ChangeType.READ
+      }
+    ];
+
+    describe('filterByChangeType', () => {
+      it('should filter operations by change type', () => {
+        const updates = LogParser.filterByChangeType(sampleOperations, ChangeType.UPDATE);
+        expect(updates).toHaveLength(1);
+        expect(updates[0]!.tool).toBe('Edit');
+
+        const reads = LogParser.filterByChangeType(sampleOperations, ChangeType.READ);
+        expect(reads).toHaveLength(2);
+      });
+    });
+
+    describe('groupByFilePath', () => {
+      it('should group operations by file path', () => {
+        const groups = LogParser.groupByFilePath(sampleOperations);
+
+        expect(groups.has('/file1.ts')).toBe(true);
+        expect(groups.has('/file2.ts')).toBe(true);
+        expect(groups.has('<no-file>')).toBe(true);
+
+        expect(groups.get('/file1.ts')).toHaveLength(2);
+        expect(groups.get('/file2.ts')).toHaveLength(1);
+        expect(groups.get('<no-file>')).toHaveLength(1);
+      });
+    });
+
+    describe('filterByDateRange', () => {
+      it('should filter operations by date range', () => {
+        const start = new Date('2024-01-01T10:30:00.000Z');
+        const end = new Date('2024-01-01T12:30:00.000Z');
+
+        const filtered = LogParser.filterByDateRange(sampleOperations, start, end);
+        expect(filtered).toHaveLength(2);
+        expect(filtered[0]!.tool).toBe('Write');
+        expect(filtered[1]!.tool).toBe('Read');
+      });
     });
   });
 });
