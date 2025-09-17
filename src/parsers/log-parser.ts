@@ -62,6 +62,40 @@ export class LogParser {
   }
 
   /**
+   * Parses a JSONL stream containing multiple log entries
+   * @param jsonlContent - String containing JSONL format data (one JSON object per line)
+   * @returns Array of OperationIndex objects
+   */
+  static parseLogStream(jsonlContent: string): OperationIndex[] {
+    if (!jsonlContent || jsonlContent.trim() === '') {
+      return [];
+    }
+
+    const operations: OperationIndex[] = [];
+    const lines = jsonlContent.split('\n');
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+
+      // Skip empty lines
+      if (trimmedLine === '') {
+        continue;
+      }
+
+      try {
+        const operation = this.parseLogEntry(trimmedLine);
+        operations.push(operation);
+      } catch (error) {
+        // Skip malformed entries and continue processing
+        // This allows for graceful handling of corrupted log files
+        continue;
+      }
+    }
+
+    return operations;
+  }
+
+  /**
    * Extracts file path from tool parameters
    * @param parameters - Tool parameters object
    * @param tool - Tool name for context

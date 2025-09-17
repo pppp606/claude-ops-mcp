@@ -166,4 +166,172 @@ describe('LogParser', () => {
       expect(result.changeType).toBe(ChangeType.READ);
     });
   });
+
+  describe('parseLogStream', () => {
+    it('should parse multiple log entries from JSONL stream', () => {
+      const jsonlContent = [
+        JSON.stringify({
+          timestamp: '2024-01-01T10:00:00.000Z',
+          tool: 'Edit',
+          parameters: { file_path: '/file1.ts', old_string: 'old', new_string: 'new' },
+          result: 'success'
+        }),
+        JSON.stringify({
+          timestamp: '2024-01-01T10:01:00.000Z',
+          tool: 'Write',
+          parameters: { file_path: '/file2.ts', content: 'content' },
+          result: 'success'
+        }),
+        JSON.stringify({
+          timestamp: '2024-01-01T10:02:00.000Z',
+          tool: 'Bash',
+          parameters: { command: 'npm test' },
+          result: 'output'
+        })
+      ].join('\n');
+
+      const results = LogParser.parseLogStream(jsonlContent);
+
+      expect(results).toHaveLength(3);
+
+      expect(results[0]!.tool).toBe('Edit');
+      expect(results[0]!.filePath).toBe('/file1.ts');
+      expect(results[0]!.changeType).toBe(ChangeType.UPDATE);
+
+      expect(results[1]!.tool).toBe('Write');
+      expect(results[1]!.filePath).toBe('/file2.ts');
+      expect(results[1]!.changeType).toBe(ChangeType.CREATE);
+
+      expect(results[2]!.tool).toBe('Bash');
+      expect(results[2]!.filePath).toBeUndefined();
+      expect(results[2]!.changeType).toBe(ChangeType.READ);
+    });
+
+    it('should handle empty lines in JSONL stream', () => {
+      const jsonlContent = [
+        JSON.stringify({
+          timestamp: '2024-01-01T10:00:00.000Z',
+          tool: 'Edit',
+          parameters: { file_path: '/file.ts', old_string: 'old', new_string: 'new' },
+          result: 'success'
+        }),
+        '',
+        '   ',
+        JSON.stringify({
+          timestamp: '2024-01-01T10:01:00.000Z',
+          tool: 'Write',
+          parameters: { file_path: '/file2.ts', content: 'content' },
+          result: 'success'
+        })
+      ].join('\n');
+
+      const results = LogParser.parseLogStream(jsonlContent);
+
+      expect(results).toHaveLength(2);
+      expect(results[0]!.tool).toBe('Edit');
+      expect(results[1]!.tool).toBe('Write');
+    });
+
+    it('should skip malformed entries and continue processing', () => {
+      const jsonlContent = [
+        JSON.stringify({
+          timestamp: '2024-01-01T10:00:00.000Z',
+          tool: 'Edit',
+          parameters: { file_path: '/file.ts', old_string: 'old', new_string: 'new' },
+          result: 'success'
+        }),
+        '{ invalid json }',
+        JSON.stringify({
+          tool: 'Write' // missing timestamp and parameters
+        }),
+        JSON.stringify({
+          timestamp: '2024-01-01T10:01:00.000Z',
+          tool: 'Write',
+          parameters: { file_path: '/file2.ts', content: 'content' },
+          result: 'success'
+        })
+      ].join('\n');
+
+      const results = LogParser.parseLogStream(jsonlContent);
+
+      expect(results).toHaveLength(2);
+      expect(results[0]!.tool).toBe('Edit');
+      expect(results[1]!.tool).toBe('Write');
+    });
+
+    it('should return empty array for empty or whitespace-only input', () => {
+      expect(LogParser.parseLogStream('')).toEqual([]);
+      expect(LogParser.parseLogStream('   \n\n  \n')).toEqual([]);
+    });
+
+    it('should handle single line without newline', () => {
+      const jsonlContent = JSON.stringify({
+        timestamp: '2024-01-01T10:00:00.000Z',
+        tool: 'Edit',
+        parameters: { file_path: '/file.ts', old_string: 'old', new_string: 'new' },
+        result: 'success'
+      });
+
+      const results = LogParser.parseLogStream(jsonlContent);
+
+      expect(results).toHaveLength(1);
+      expect(results[0]!.tool).toBe('Edit');
+      expect(results[0]!.filePath).toBe('/file.ts');
+    });
+
+    it('should handle JSONL with trailing newline', () => {
+      const jsonlContent = [
+        JSON.stringify({
+          timestamp: '2024-01-01T10:00:00.000Z',
+          tool: 'Edit',
+          parameters: { file_path: '/file.ts', old_string: 'old', new_string: 'new' },
+          result: 'success'
+        }),
+        JSON.stringify({
+          timestamp: '2024-01-01T10:01:00.000Z',
+          tool: 'Write',
+          parameters: { file_path: '/file2.ts', content: 'content' },
+          result: 'success'
+        }),
+        '' // trailing newline results in empty string
+      ].join('\n');
+
+      const results = LogParser.parseLogStream(jsonlContent);
+
+      expect(results).toHaveLength(2);
+      expect(results[0]!.tool).toBe('Edit');
+      expect(results[1]!.tool).toBe('Write');
+    });
+
+    it('should preserve operation order from the stream', () => {
+      const jsonlContent = [
+        JSON.stringify({
+          timestamp: '2024-01-01T10:02:00.000Z',
+          tool: 'Read',
+          parameters: { file_path: '/file3.ts' },
+          result: 'content'
+        }),
+        JSON.stringify({
+          timestamp: '2024-01-01T10:00:00.000Z',
+          tool: 'Edit',
+          parameters: { file_path: '/file1.ts', old_string: 'old', new_string: 'new' },
+          result: 'success'
+        }),
+        JSON.stringify({
+          timestamp: '2024-01-01T10:01:00.000Z',
+          tool: 'Write',
+          parameters: { file_path: '/file2.ts', content: 'content' },
+          result: 'success'
+        })
+      ].join('\n');
+
+      const results = LogParser.parseLogStream(jsonlContent);
+
+      expect(results).toHaveLength(3);
+      // Should preserve stream order, not timestamp order
+      expect(results[0]!.timestamp).toBe('2024-01-01T10:02:00.000Z');
+      expect(results[1]!.timestamp).toBe('2024-01-01T10:00:00.000Z');
+      expect(results[2]!.timestamp).toBe('2024-01-01T10:01:00.000Z');
+    });
+  });
 });
