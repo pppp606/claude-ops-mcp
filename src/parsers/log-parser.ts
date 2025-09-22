@@ -62,7 +62,7 @@ export class LogParser {
     'Edit', 'Write', 'Read', 'MultiEdit', 'Delete'
   ]);
 
-  private static readonly FILE_PATH_KEYS = ['file_path', 'filepath'];
+  private static readonly FILE_PATH_KEYS = ['file_path', 'filepath', 'path'];
 
   // Tool to change type mapping for performance
   private static readonly TOOL_CHANGE_TYPE_MAP = new Map<string, ChangeType>([
@@ -105,6 +105,9 @@ export class LogParser {
     }
     if (!rawEntry.parameters) {
       throw new LogParseError('Missing required field: parameters');
+    }
+    if (typeof rawEntry.parameters !== 'object' || Array.isArray(rawEntry.parameters)) {
+      throw new LogParseError('Invalid parameters type');
     }
 
     // Validate timestamp format if requested
@@ -228,8 +231,8 @@ export class LogParser {
    * @returns True if valid ISO 8601 format
    */
   private static isValidTimestamp(timestamp: string): boolean {
-    // Basic ISO 8601 format validation
-    const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
+    // Basic ISO 8601 format validation (Z required for UTC)
+    const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/;
     if (!iso8601Regex.test(timestamp)) {
       return false;
     }
@@ -282,17 +285,17 @@ export class LogParser {
     switch (tool) {
       case 'Bash': {
         const command = parameters['command'];
-        return `Bash command: ${command || 'unknown command'}`;
+        return `Bash command: ${typeof command === 'string' ? command : 'unknown command'}`;
       }
 
       case 'Grep': {
         const pattern = parameters['pattern'];
-        return `Grep search for pattern: ${pattern || 'unknown pattern'}`;
+        return `Grep search for pattern: ${typeof pattern === 'string' ? pattern : 'unknown pattern'}`;
       }
 
       case 'Glob': {
         const pattern = parameters['pattern'];
-        return `Glob search for pattern: ${pattern || 'unknown pattern'}`;
+        return `Glob search for pattern: ${typeof pattern === 'string' ? pattern : 'unknown pattern'}`;
       }
 
       default:

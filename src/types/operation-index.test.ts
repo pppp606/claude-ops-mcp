@@ -55,7 +55,7 @@ describe('OperationIndex', () => {
       };
 
       // Test that the timestamp follows ISO 8601 pattern
-      const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
+      const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
       expect(validOperation.timestamp).toMatch(iso8601Regex);
     });
 
