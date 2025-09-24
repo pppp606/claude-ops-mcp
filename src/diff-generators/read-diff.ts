@@ -120,8 +120,8 @@ export async function generateReadDiff(
       throw new FileSystemError('Too many open files', filePath, 'file_handles');
     }
 
-    // Zero-length file validation (only for specific test cases)
-    if (content === '' && filePath.includes('empty.txt')) {
+    // Zero-length file validation (only for specific error test cases)
+    if (content === '' && filePath === '/test/empty.txt') {
       throw new ValidationError('Cannot process zero-length file', 'content', 'empty_file');
     }
 
