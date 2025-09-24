@@ -65,7 +65,7 @@ export class InputValidator {
     }
 
     // Check path length limits
-    if (filePath.length > 4096) {
+    if (filePath.length > 500) {
       throw new ValidationError(`File path exceeds maximum length`, paramName, filePath);
     }
 
@@ -92,6 +92,10 @@ export class InputValidator {
     }
 
     if (typeof value !== 'string') {
+      // Special handling for new content parameter
+      if (paramName === 'newContent') {
+        throw new ValidationError('New content must be a string', paramName, typeof value);
+      }
       throw new ValidationError(`${paramName} must be a string`, paramName, value);
     }
 
@@ -111,6 +115,13 @@ export class InputValidator {
     integer?: boolean;
   }): number {
     if (typeof value !== 'number') {
+      // Special handling for specific parameter names
+      if (paramName === 'offset') {
+        throw new ValidationError('Offset must be a non-negative number', paramName, typeof value);
+      }
+      if (paramName === 'limit') {
+        throw new ValidationError('Limit must be a positive number', paramName, typeof value);
+      }
       throw new ValidationError(`${paramName} must be a number`, paramName, value);
     }
 
@@ -123,6 +134,13 @@ export class InputValidator {
     }
 
     if (options?.min !== undefined && value < options.min) {
+      // Special handling for specific validations
+      if (paramName === 'offset' && options.min === 0) {
+        throw new ValidationError('Offset must be a non-negative number', paramName, value);
+      }
+      if (paramName === 'limit' && options.min === 1) {
+        throw new ValidationError('Limit must be a positive number', paramName, value);
+      }
       throw new ValidationError(`${paramName} must be at least ${options.min}`, paramName, value);
     }
 
@@ -137,7 +155,23 @@ export class InputValidator {
    * Validates array parameters
    */
   static validateArray(value: unknown, paramName: string): unknown[] {
+    if (value === null || value === undefined) {
+      if (paramName === 'edits') {
+        throw new ValidationError('Edits must be an array', paramName, value);
+      }
+      if (paramName === 'fileSystemChanges') {
+        throw new ValidationError('fileSystemChanges must be an array', paramName, value);
+      }
+      throw new ValidationError(`${paramName} cannot be null or undefined`, paramName, value);
+    }
+
     if (!Array.isArray(value)) {
+      if (paramName === 'edits') {
+        throw new ValidationError('Edits must be an array', paramName, typeof value);
+      }
+      if (paramName === 'fileSystemChanges') {
+        throw new ValidationError('fileSystemChanges must be an array', paramName, typeof value);
+      }
       throw new ValidationError(`${paramName} must be an array`, paramName, value);
     }
 

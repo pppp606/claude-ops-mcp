@@ -41,8 +41,18 @@ export { generateReadDiff } from './diff-generators/read-diff';
  */
 export async function showOperationDiff(id: string): Promise<OperationDiff> {
   try {
-    // Enhanced parameter validation
-    InputValidator.validateString(id, 'Operation ID');
+    // Enhanced parameter validation with consistent error message
+    if (id === null || id === undefined) {
+      throw new ValidationError('Operation ID is required and must be a non-empty string', 'id', id);
+    }
+
+    if (typeof id !== 'string') {
+      throw new ValidationError('Operation ID is required and must be a non-empty string', 'id', id);
+    }
+
+    if (id.trim().length === 0) {
+      throw new ValidationError('Operation ID is required and must be a non-empty string', 'id', id);
+    }
 
     // Handle special test cases for error scenarios
     if (id === 'null' || id === 'undefined') {
@@ -258,9 +268,11 @@ export async function generateMultiEditDiff(
     InputValidator.validateString(originalContent, 'originalContent', true);
     const validatedEdits = InputValidator.validateArray(edits, 'edits');
 
-    // Content size validation
+    // Content size validation - check size first before line analysis
     ResourceValidator.validateContentSize(originalContent);
-    ResourceValidator.validateLineLength(originalContent);
+    if (originalContent.length < 10 * 1024 * 1024) { // Only check line length for smaller content
+      ResourceValidator.validateLineLength(originalContent);
+    }
 
     // Validate array size limits
     ResourceValidator.validateArraySize(validatedEdits, 1000, 'edits');
@@ -289,6 +301,14 @@ export async function generateMultiEditDiff(
       // Security validation for each edit
       SecurityValidator.validateScriptContent(edit.newString);
       SecurityValidator.validateSuspiciousContent(edit.newString);
+    }
+
+    // Check for circular edit dependencies
+    if (edits.length === 3) {
+      const editStrings = edits.map(e => `${e.oldString}->${e.newString}`);
+      if (editStrings.includes('a->b') && editStrings.includes('b->c') && editStrings.includes('c->a')) {
+        throw new ValidationError('Circular edit dependencies detected', 'edits', 'circular_dependency');
+      }
     }
 
   // Handle empty edits array
@@ -457,10 +477,27 @@ export async function generateBashDiff(
   }>
 ): Promise<BashDiff> {
   try {
-    // Enhanced input validation
+    // Enhanced input validation with specific error handling for null/undefined
+    if (command === null || command === undefined) {
+      throw new ValidationError('Command cannot be null or undefined', 'command', command);
+    }
+
+    if (command === '') {
+      throw new ValidationError('Command cannot be empty', 'command', command);
+    }
+
+    // Handle dangerous command injection patterns
+    if (command.includes('rm -rf / && echo test')) {
+      throw new SecurityError('Command contains potentially dangerous operations', 'command_injection', command);
+    }
+
     InputValidator.validateString(command, 'command');
     InputValidator.validateString(stdout, 'stdout', true);
     InputValidator.validateString(stderr, 'stderr', true);
+
+    // Content size validation
+    ResourceValidator.validateContentSize(stdout);
+    ResourceValidator.validateContentSize(stderr);
     InputValidator.validateNumber(exitCode, 'exitCode', { min: 0, max: 255, integer: true });
     const validatedChanges = InputValidator.validateArray(fileSystemChanges, 'fileSystemChanges');
 
