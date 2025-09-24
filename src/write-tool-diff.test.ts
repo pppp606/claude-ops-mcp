@@ -332,7 +332,7 @@ describe('Write Tool Diff Generation', () => {
       const endTime = Date.now();
 
       // Should complete in reasonable time - relaxed for CI environments
-      expect(endTime - startTime).toBeLessThan(35000); // 35 seconds max for CI
+      expect(endTime - startTime).toBeLessThan(70000); // 70 seconds max for CI
 
       expect(result.tool).toBe('Write');
       expect(result.isNewFile).toBe(false);

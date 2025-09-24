@@ -432,17 +432,14 @@ describe('Edit Tool Diff Generation', () => {
     it('should handle binary-like content gracefully', async () => {
       const binaryLikeContent = '\x00\x01\x02\xFF\xFE\xFD';
 
-      const result = await generateEditDiff(
+      // Binary content should throw an error
+      await expect(generateEditDiff(
         '/test/binary.dat',
         binaryLikeContent + 'text',
         'text',
         'newtext',
         false
-      );
-
-      expect(result.oldString).toBe('text');
-      expect(result.newString).toBe('newtext');
-      expect(result.unifiedDiff.newVersion).toContain('newtext');
+      )).rejects.toThrow('Cannot edit binary file content');
     });
   });
 });
