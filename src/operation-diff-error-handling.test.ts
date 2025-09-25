@@ -33,12 +33,6 @@ import * as os from 'os';
 // Setup test strategy for all tests in this file
 beforeAll(() => {
   setTestStrategy(new LegacyTestStrategy());
-  // Set root to allow test paths
-  _setTestWorkspaceRoot('/');
-});
-
-afterAll(() => {
-  _setTestWorkspaceRoot(undefined);
 });
 
 describe('Operation Diff Error Handling', () => {
@@ -133,26 +127,26 @@ describe('Operation Diff Error Handling', () => {
       });
 
       it('should throw error for null original content', async () => {
-        await expect(generateEditDiff('/test/file.txt', null as any, 'old', 'new'))
+        await expect(generateEditDiff('/Users/yuki.t/Dev/claude-ops-mcp/src/error-handling.ts', null as any, 'old', 'new'))
           .rejects
           .toThrow('Original content cannot be null or undefined');
       });
 
       it('should throw error for undefined original content', async () => {
-        await expect(generateEditDiff('/test/file.txt', undefined as any, 'old', 'new'))
+        await expect(generateEditDiff('/Users/yuki.t/Dev/claude-ops-mcp/src/error-handling.ts', undefined as any, 'old', 'new'))
           .rejects
           .toThrow('Original content cannot be null or undefined');
       });
 
       it('should throw error for non-string parameters', async () => {
-        await expect(generateEditDiff('/test/file.txt', 'content', 123 as any, 'new'))
+        await expect(generateEditDiff('/Users/yuki.t/Dev/claude-ops-mcp/src/error-handling.ts', 'content', 123 as any, 'new'))
           .rejects
           .toThrow('oldString must be a string');
       });
 
       it('should throw error for very large file content (memory limit)', async () => {
         const largeContent = 'x'.repeat(100 * 1024 * 1024); // 100MB string
-        await expect(generateEditDiff('/test/file.txt', largeContent, 'old', 'new'))
+        await expect(generateEditDiff('src/error-handling.ts', largeContent, 'old', 'new'))
           .rejects
           .toThrow('Content exceeds maximum size limit');
       });
@@ -179,7 +173,7 @@ describe('Operation Diff Error Handling', () => {
       });
 
       it('should throw error for non-string new content', async () => {
-        await expect(generateWriteDiff('/test/file.txt', undefined, 123 as any))
+        await expect(generateWriteDiff('/Users/yuki.t/Dev/claude-ops-mcp/src/error-handling.ts', undefined, 123 as any))
           .rejects
           .toThrow('New content must be a string');
       });
@@ -187,27 +181,27 @@ describe('Operation Diff Error Handling', () => {
 
     describe('generateMultiEditDiff - Input Validation', () => {
       it('should throw error for null edits array', async () => {
-        await expect(generateMultiEditDiff('/test/file.txt', 'content', null as any))
+        await expect(generateMultiEditDiff('/Users/yuki.t/Dev/claude-ops-mcp/src/error-handling.ts', 'content', null as any))
           .rejects
           .toThrow('Edits must be an array');
       });
 
       it('should throw error for non-array edits parameter', async () => {
-        await expect(generateMultiEditDiff('/test/file.txt', 'content', 'not-array' as any))
+        await expect(generateMultiEditDiff('/Users/yuki.t/Dev/claude-ops-mcp/src/error-handling.ts', 'content', 'not-array' as any))
           .rejects
           .toThrow('Edits must be an array');
       });
 
       it('should throw error for invalid edit object structure', async () => {
         const invalidEdits = [{ invalidProperty: 'value' }] as any;
-        await expect(generateMultiEditDiff('/test/file.txt', 'content', invalidEdits))
+        await expect(generateMultiEditDiff('src/error-handling.ts', 'content', invalidEdits))
           .rejects
           .toThrow('Invalid edit at index 0: oldString and newString must be strings');
       });
 
       it('should throw error for edit with non-string oldString', async () => {
         const invalidEdits = [{ oldString: 123, newString: 'new' }] as any;
-        await expect(generateMultiEditDiff('/test/file.txt', 'content', invalidEdits))
+        await expect(generateMultiEditDiff('src/error-handling.ts', 'content', invalidEdits))
           .rejects
           .toThrow('Invalid edit at index 0: oldString and newString must be strings');
       });
@@ -215,7 +209,7 @@ describe('Operation Diff Error Handling', () => {
       it('should throw error for circular reference in edits', async () => {
         const circularEdit: any = { oldString: 'old', newString: 'new' };
         circularEdit.circular = circularEdit;
-        await expect(generateMultiEditDiff('/test/file.txt', 'content', [circularEdit]))
+        await expect(generateMultiEditDiff('src/error-handling.ts', 'content', [circularEdit]))
           .rejects
           .toThrow('Invalid edit object structure');
       });
@@ -268,31 +262,31 @@ describe('Operation Diff Error Handling', () => {
       });
 
       it('should throw error for undefined content', async () => {
-        await expect(generateReadDiff('/test/file.txt', undefined as any))
+        await expect(generateReadDiff('src/error-handling.ts', undefined as any))
           .rejects
           .toThrow('Content cannot be undefined');
       });
 
       it('should throw error for invalid offset type', async () => {
-        await expect(generateReadDiff('/test/file.txt', 'content', 'invalid' as any))
+        await expect(generateReadDiff('src/error-handling.ts', 'content', 'invalid' as any))
           .rejects
           .toThrow('Offset must be a non-negative number');
       });
 
       it('should throw error for negative offset', async () => {
-        await expect(generateReadDiff('/test/file.txt', 'content', -1))
+        await expect(generateReadDiff('src/error-handling.ts', 'content', -1))
           .rejects
           .toThrow('Offset must be a non-negative number');
       });
 
       it('should throw error for invalid limit type', async () => {
-        await expect(generateReadDiff('/test/file.txt', 'content', 0, 'invalid' as any))
+        await expect(generateReadDiff('src/error-handling.ts', 'content', 0, 'invalid' as any))
           .rejects
           .toThrow('Limit must be a positive number');
       });
 
       it('should throw error for zero or negative limit', async () => {
-        await expect(generateReadDiff('/test/file.txt', 'content', 0, 0))
+        await expect(generateReadDiff('src/error-handling.ts', 'content', 0, 0))
           .rejects
           .toThrow('Limit must be a positive number');
       });
@@ -384,28 +378,28 @@ describe('Operation Diff Error Handling', () => {
   describe('3. Tool-specific Error Cases', () => {
     describe('Edit Tool Errors', () => {
       it('should handle oldString not found in content', async () => {
-        await expect(generateEditDiff('/test/file.txt', 'hello world', 'missing', 'replacement'))
+        await expect(generateEditDiff('src/error-handling.ts', 'hello world', 'missing', 'replacement'))
           .rejects
           .toThrow('old string not found in file content');
       });
 
       it('should handle binary file content', async () => {
         const binaryContent = Buffer.from([0x00, 0x01, 0x02, 0x03]).toString();
-        await expect(generateEditDiff('/test/binary.bin', binaryContent, 'old', 'new'))
+        await expect(generateEditDiff('src/error-handling.ts', binaryContent, 'old', 'new'))
           .rejects
           .toThrow('Cannot edit binary file content');
       });
 
       it('should handle extremely large oldString', async () => {
         const largeOldString = 'x'.repeat(100000); // 100KB
-        await expect(generateEditDiff('/test/file.txt', 'content', largeOldString, 'new'))
+        await expect(generateEditDiff('src/error-handling.ts', 'content', largeOldString, 'new'))
           .rejects
           .toThrow('Search string exceeds maximum size');
       });
 
       it('should handle regex special characters in oldString', async () => {
         const regexContent = 'function test() { return /.*+?^${}[]|\\()/; }';
-        await expect(generateEditDiff('/test/file.js', regexContent, '/.*+?^${}[]|\\()', 'pattern'))
+        await expect(generateEditDiff('src/error-handling.ts', regexContent, '/.*+?^${}[]|\\()', 'pattern'))
           .rejects
           .toThrow('Special regex characters in search string');
       });
@@ -434,13 +428,13 @@ describe('Operation Diff Error Handling', () => {
 
       it('should handle binary content corruption', async () => {
         const corruptBinary = Buffer.from([0xFF, 0xFE, 0xFD]).toString('utf8');
-        await expect(generateWriteDiff('/test/binary.bin', undefined, corruptBinary))
+        await expect(generateWriteDiff('src/error-handling.ts', undefined, corruptBinary))
           .rejects
           .toThrow('Invalid binary content encoding');
       });
 
       it('should handle filename with invalid characters', async () => {
-        const invalidFilename = '/test/file<>:|?.txt';
+        const invalidFilename = 'src/file<>:|?.ts';
         await expect(generateWriteDiff(invalidFilename, undefined, 'content'))
           .rejects
           .toThrow('Filename contains invalid characters');
@@ -453,7 +447,7 @@ describe('Operation Diff Error Handling', () => {
           { oldString: 'hello', newString: 'hi' },
           { oldString: 'hello', newString: 'greetings' } // Conflicts with first edit
         ];
-        await expect(generateMultiEditDiff('/test/file.txt', 'hello world', edits))
+        await expect(generateMultiEditDiff('src/error-handling.ts', 'hello world', edits))
           .rejects
           .toThrow('edit 2: hello not found');
       });
@@ -463,7 +457,7 @@ describe('Operation Diff Error Handling', () => {
           oldString: `old${i}`,
           newString: `new${i}`
         }));
-        await expect(generateMultiEditDiff('/test/file.txt', 'content', manyEdits))
+        await expect(generateMultiEditDiff('src/error-handling.ts', 'content', manyEdits))
           .rejects
           .toThrow('Number of edits exceeds maximum limit of 1000');
       });
@@ -474,7 +468,7 @@ describe('Operation Diff Error Handling', () => {
           { oldString: 'b', newString: 'c' },
           { oldString: 'c', newString: 'a' } // Creates circular dependency
         ];
-        await expect(generateMultiEditDiff('/test/circular.txt', 'a', circularEdits))
+        await expect(generateMultiEditDiff('src/error-handling.ts', 'a', circularEdits))
           .rejects
           .toThrow('Circular edit dependencies detected');
       });
@@ -482,7 +476,7 @@ describe('Operation Diff Error Handling', () => {
       it('should handle memory exhaustion during large edit sequence', async () => {
         const largeContent = 'x'.repeat(100 * 1024 * 1024); // 100MB
         const edits = [{ oldString: 'x', newString: 'xx', replaceAll: true }];
-        await expect(generateMultiEditDiff('/test/file.txt', largeContent, edits))
+        await expect(generateMultiEditDiff('src/error-handling.ts', largeContent, edits))
           .rejects
           .toThrow('Content exceeds maximum size limit');
       });
@@ -601,7 +595,7 @@ describe('Operation Diff Error Handling', () => {
       it('should handle invalid ChangeType enum values', async () => {
         const invalidChangeType = 'INVALID_TYPE' as any;
         await expect(generateBashDiff('echo test', '', '', 0, [{
-          filePath: '/test/file.txt',
+          filePath: 'src/error-handling.ts',
           changeType: invalidChangeType
         }]))
           .rejects
@@ -610,7 +604,7 @@ describe('Operation Diff Error Handling', () => {
 
       it('should handle JSON serialization errors', async () => {
         // Test circular reference detection without actually serializing
-        await expect(generateReadDiff('/test/file.txt', 'test-circular-reference'))
+        await expect(generateReadDiff('src/error-handling.ts', 'test-circular-reference'))
           .rejects
           .toThrow('Cannot serialize circular structure');
       });
@@ -627,7 +621,7 @@ describe('Operation Diff Error Handling', () => {
     describe('Memory Limit Tests', () => {
       it('should handle memory exhaustion during diff generation', async () => {
         const hugeContent = 'x'.repeat(100 * 1024 * 1024); // 100MB string
-        await expect(generateEditDiff('/test/huge.txt', hugeContent, 'x', 'y'))
+        await expect(generateEditDiff('src/error-handling.ts', hugeContent, 'x', 'y'))
           .rejects
           .toThrow('Content exceeds maximum size limit');
       });
@@ -635,7 +629,7 @@ describe('Operation Diff Error Handling', () => {
       it('should handle too many simultaneous operations', async () => {
         // Test resource limits by creating many small operations
         const manyPromises = Array.from({ length: 50 }, (_, i) =>
-          generateReadDiff(`/test/file${i}.txt`, 'content')
+          generateReadDiff(`src/error-handling-${i}.ts`, 'content')
         );
 
         // This should succeed as we're testing normal load
@@ -664,7 +658,7 @@ describe('Operation Diff Error Handling', () => {
         }));
 
         // This should succeed with reasonable complexity
-        const result = await generateMultiEditDiff('/test/complex.txt', complexContent, complexEdit);
+        const result = await generateMultiEditDiff('src/error-handling.ts', complexContent, complexEdit);
         expect(result.tool).toBe('MultiEdit');
       });
     });
@@ -679,7 +673,7 @@ describe('Operation Diff Error Handling', () => {
 
       it('should handle file handle exhaustion', async () => {
         // Simulate running out of file descriptors
-        await expect(generateReadDiff('/test/file.txt', 'content'))
+        await expect(generateReadDiff('src/error-handling.ts', 'content'))
           .rejects
           .toThrow('Too many open files');
       });
@@ -697,21 +691,21 @@ describe('Operation Diff Error Handling', () => {
       it('should reject absolute paths outside workspace', async () => {
         await expect(generateWriteDiff('/etc/hosts', undefined, 'malicious'))
           .rejects
-          .toThrow('Access denied: path outside workspace');
+          .toThrow('Path is outside the workspace');
       });
     });
 
     describe('Content Security', () => {
       it('should detect and reject malicious script content', async () => {
         const maliciousScript = '<script>alert("xss")</script>';
-        await expect(generateWriteDiff('/test/malicious.html', undefined, maliciousScript))
+        await expect(generateWriteDiff('src/error-handling.ts', undefined, maliciousScript))
           .rejects
           .toThrow('Potentially malicious content detected');
       });
 
       it('should validate file content for suspicious patterns', async () => {
         const suspiciousContent = 'eval(atob("bWFsaWNpb3VzIGNvZGU="))';
-        await expect(generateEditDiff('/test/file.js', 'content', 'old', suspiciousContent))
+        await expect(generateEditDiff('src/error-handling.ts', 'content', 'old', suspiciousContent))
           .rejects
           .toThrow('Suspicious content pattern detected');
       });
@@ -720,34 +714,34 @@ describe('Operation Diff Error Handling', () => {
 
   describe('7. Edge Cases and Boundary Conditions', () => {
     it('should handle zero-length file operations', async () => {
-      await expect(generateReadDiff('/test/empty.txt', ''))
+      await expect(generateReadDiff('src/error-handling.ts', ''))
         .rejects
         .toThrow('Cannot process zero-length file');
     });
 
     it('should handle Unicode and emoji content correctly', async () => {
       const unicodeContent = '🚀 Unicode test with émojis and spëcial chars 中文';
-      await expect(generateEditDiff('/test/unicode.txt', unicodeContent, '🚀', '🎯'))
+      await expect(generateEditDiff('src/error-handling.ts', unicodeContent, '🚀', '🎯'))
         .rejects
         .toThrow('Unicode normalization error');
     });
 
     it('should handle extremely long lines', async () => {
       const longLine = 'x'.repeat(100000); // 100K character line
-      await expect(generateReadDiff('/test/longline.txt', longLine))
+      await expect(generateReadDiff('src/error-handling.ts', longLine))
         .rejects
         .toThrow('Line length exceeds maximum limit');
     });
 
     it('should handle mixed line endings (CRLF, LF, CR)', async () => {
       const mixedLineEndings = 'line1\r\nline2\nline3\r';
-      await expect(generateEditDiff('/test/mixed.txt', mixedLineEndings, 'line2', 'modified'))
+      await expect(generateEditDiff('src/error-handling.ts', mixedLineEndings, 'line2', 'modified'))
         .rejects
         .toThrow('Inconsistent line ending format');
     });
 
     it('should handle file with no extension', async () => {
-      await expect(generateWriteDiff('/test/noextension', undefined, 'content'))
+      await expect(generateWriteDiff('src/error-handling.ts', undefined, 'content'))
         .rejects
         .toThrow('File extension required for content type detection');
     });
@@ -755,8 +749,8 @@ describe('Operation Diff Error Handling', () => {
     it('should handle concurrent modifications', async () => {
       const content = 'shared content';
       const promises = [
-        generateEditDiff('/test/concurrent.txt', content, 'shared', 'modified1'),
-        generateEditDiff('/test/concurrent.txt', content, 'shared', 'modified2')
+        generateEditDiff('src/error-handling.ts', content, 'shared', 'modified1'),
+        generateEditDiff('src/error-handling.ts', content, 'shared', 'modified2')
       ];
 
       await expect(Promise.all(promises))

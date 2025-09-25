@@ -6,16 +6,11 @@ import { _setTestWorkspaceRoot } from './utils/workspace-utils';
 // Setup test strategy for all tests in this file
 beforeAll(() => {
   setTestStrategy(new LegacyTestStrategy());
-  _setTestWorkspaceRoot('/');
-});
-
-afterAll(() => {
-  _setTestWorkspaceRoot(undefined);
 });
 
 describe('generateMultiEditDiff - MultiEdit Tool Diff Generation', () => {
   // Test data for various scenarios
-  const testFilePath = '/src/services/api.ts';
+  const testFilePath = 'src/services/api.ts';
 
   const sampleOriginalContent = `import { HttpClient } from './http';
 

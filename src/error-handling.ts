@@ -70,52 +70,26 @@ export class InputValidator {
       throw new ValidationError(`File path exceeds maximum length`, paramName, filePath);
     }
 
-    // Workspace-based path validation (more robust than simple normalize check)
+    // Workspace-based path validation - consistent security across all environments
     try {
-      // For test environment, relax validation but keep security checks
-      if (process.env['NODE_ENV'] === 'test') {
-        // Basic security checks
-        if (filePath.includes('\0')) {
-          throw new SecurityError(`File path contains invalid characters`, 'path_traversal', filePath);
-        }
-
-        // Check for path traversal patterns
-        if (filePath.includes('..') && (filePath.includes('etc/passwd') || filePath.includes('../../../'))) {
-          throw new SecurityError(`Path traversal attempt detected`, 'path_traversal', filePath);
-        }
-
-        if (filePath.startsWith('/etc/')) {
-          // Reject specific dangerous paths
-          if (filePath === '/etc/shadow' || filePath === '/etc/hosts') {
-            throw new SecurityError(`Access denied: path outside workspace`, 'workspace_violation', filePath);
-          }
-          // Allow other /etc paths in tests
-          return filePath;
-        }
-        // Allow all other test paths
-        return filePath;
+      // Check for null bytes (always dangerous)
+      if (filePath.includes('\0')) {
+        throw new SecurityError(`File path contains invalid characters`, 'path_traversal', filePath);
       }
 
-      // For production, strict validation
-      // For test compatibility, allow certain system paths
+      // Allow specific system paths needed for testing
       if (filePath.startsWith('/dev/') || filePath.startsWith('/tmp/') || filePath === '/dev/null') {
-        // Allow system paths for testing
         return filePath;
       }
 
-      // For paths starting with /etc/, maintain backward compatibility with existing tests
-      if (filePath.startsWith('/etc/')) {
-        throw new SecurityError(`Access denied: path outside workspace`, 'workspace_violation', filePath);
-      }
-
-      // Validate workspace containment for other paths
+      // For all other paths, enforce workspace containment
       if (path.isAbsolute(filePath)) {
         // For absolute paths, ensure they're within workspace
         if (!isWithinWorkspace(filePath)) {
           throw new SecurityError(`Path is outside the workspace`, 'workspace_violation', filePath);
         }
       } else {
-        // For relative paths, validate against workspace
+        // For relative paths, validate against workspace (this catches ../ attacks)
         validateWorkspacePath(filePath);
       }
     } catch (error) {
