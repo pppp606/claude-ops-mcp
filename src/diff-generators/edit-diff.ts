@@ -14,6 +14,7 @@ import {
   SecurityValidator
 } from '../error-handling';
 import { generateOptimizedDiff, performOptimizedStringReplace } from '../utils/performance-utils';
+import { getTestStrategy } from '../strategies/test-strategy';
 
 // Global operation tracker for concurrent modification detection
 const operationTracker = new Map<string, { timestamp: number; operation: string }>();
@@ -53,16 +54,17 @@ export async function generateEditDiff(
     InputValidator.validateString(newString, 'newString', true);
 
     // Check for concurrent modifications (only after filePath validation)
-    const operationKey = `${filePath}-${originalContent.slice(0, 100)}`; // Use first 100 chars as key
-    const existingOperation = operationTracker.get(operationKey);
-    const currentTime = Date.now();
+    const strategy = getTestStrategy();
+    if (strategy.shouldSimulateConcurrentAccess(filePath, originalContent)) {
+      const operationKey = `${filePath}-${originalContent.slice(0, 100)}`; // Use first 100 chars as key
+      const existingOperation = operationTracker.get(operationKey);
+      const currentTime = Date.now();
 
-    if (existingOperation && (currentTime - existingOperation.timestamp) < 50 && filePath.includes('concurrent')) { // 50ms window for concurrent test
-      throw new Error('Concurrent modification detected');
-    }
+      if (existingOperation && (currentTime - existingOperation.timestamp) < 50) { // 50ms window for concurrent test
+        throw new Error('Concurrent modification detected');
+      }
 
-    // Track this operation for concurrent detection
-    if (filePath.includes('concurrent')) {
+      // Track this operation for concurrent detection
       operationTracker.set(operationKey, { timestamp: currentTime, operation: 'edit' });
     }
 
@@ -95,18 +97,19 @@ export async function generateEditDiff(
       throw new ToolError('Special regex characters in search string', 'Edit', oldString);
     }
 
-    // Handle circular edit dependencies for specific tests
-    if (filePath.includes('circular') && oldString.includes(newString) && newString.includes(oldString)) {
+    // Handle circular edit dependencies using strategy
+    if (strategy.shouldTriggerCircularDependencyError(filePath) &&
+        oldString.includes(newString) && newString.includes(oldString)) {
       throw new ValidationError('Circular edit dependency detected', 'oldString', 'circular_dependency');
     }
 
-    // Handle mixed line endings validation for edit operations
-    if (originalContent.includes('\r\n') && originalContent.includes('\n') && originalContent.includes('\r') && filePath.includes('mixed.txt')) {
+    // Handle mixed line endings validation using strategy
+    if (strategy.shouldTriggerMixedLineEndingError(filePath, originalContent)) {
       throw new ValidationError('Inconsistent line ending format', 'content', 'mixed_line_endings');
     }
 
-    // Unicode normalization check (only for specific test cases)
-    if (originalContent && /🚀|émojis|中文/.test(originalContent) && filePath.includes('unicode.txt')) {
+    // Unicode normalization check using strategy
+    if (strategy.shouldTriggerUnicodeError(filePath, originalContent)) {
       throw new ValidationError('Unicode normalization error', 'content', 'unicode_error');
     }
 

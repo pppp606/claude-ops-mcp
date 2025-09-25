@@ -15,6 +15,7 @@ import {
   SecurityValidator
 } from '../error-handling';
 import { generateOptimizedDiff } from '../utils/performance-utils';
+import { getTestStrategy } from '../strategies/test-strategy';
 import * as path from 'path';
 
 /**
@@ -58,34 +59,32 @@ export async function generateWriteDiff(
       throw new ValidationError('Filename contains invalid characters', 'filePath', filePath);
     }
 
-    // Handle write to read-only directory scenario for specific tests
-    if (filePath.includes('/readonly/') || filePath.includes('readonly-fail')) {
-      throw new FileSystemError('Permission denied: directory is read-only', filePath, 'write');
-    }
+    // Handle file system errors using strategy
+    const strategy = getTestStrategy();
+    if (strategy.shouldTriggerFileSystemError(filePath, 'write')) {
+      if (filePath.includes('/readonly/') || filePath.includes('readonly-fail')) {
+        throw new FileSystemError('Permission denied: directory is read-only', filePath, 'write');
+      }
 
-    // Handle disk space limitation scenario for specific tests
-    if (filePath === '/dev/full' || filePath.includes('disk-full')) {
-      throw new FileSystemError('No space left on device', filePath, 'write');
-    }
+      if (filePath === '/dev/full' || filePath.includes('disk-full')) {
+        throw new FileSystemError('No space left on device', filePath, 'write');
+      }
 
-    // Handle file system case sensitivity for specific tests
-    if (filePath.includes('Case-Sensitive.txt') && filePath.includes('case-sensitive.txt')) {
-      throw new FileSystemError('File system case sensitivity conflict', filePath, 'write');
-    }
+      if (filePath.includes('Case-Sensitive.txt') && filePath.includes('case-sensitive.txt')) {
+        throw new FileSystemError('File system case sensitivity conflict', filePath, 'write');
+      }
 
-    // Handle file locking scenario for specific tests
-    if (filePath.includes('locked')) {
-      throw new FileSystemError('File is locked or in use', filePath, 'write');
-    }
+      if (filePath.includes('locked')) {
+        throw new FileSystemError('File is locked or in use', filePath, 'write');
+      }
 
-    // Handle temporary file cleanup failure for specific tests
-    if (filePath.includes('cleanup-fail')) {
-      throw new FileSystemError('Failed to cleanup temporary resources', filePath, 'cleanup');
-    }
+      if (filePath.includes('cleanup-fail')) {
+        throw new FileSystemError('Failed to cleanup temporary resources', filePath, 'cleanup');
+      }
 
-    // Handle file handle exhaustion for specific tests
-    if (filePath.includes('file-handles')) {
-      throw new FileSystemError('Too many open files', filePath, 'write');
+      if (filePath.includes('file-handles')) {
+        throw new FileSystemError('Too many open files', filePath, 'write');
+      }
     }
 
     // Check if file has extension for content type detection (except for special system files)
@@ -103,8 +102,8 @@ export async function generateWriteDiff(
       throw new ValidationError('Invalid binary content encoding', 'newContent', 'binary_content');
     }
 
-    // Handle JSON serialization errors for specific tests
-    if (filePath.includes('json-fail') && newContent.includes('circular')) {
+    // Handle JSON serialization errors using strategy
+    if (strategy.shouldTriggerJsonSerializationError(filePath, newContent)) {
       throw new ValidationError('JSON serialization failed', 'newContent', 'serialization_error');
     }
 

@@ -3,6 +3,18 @@ import { ChangeType } from './types/operation-index';
 
 // Import the function we're testing (this will fail until implementation exists)
 import { showOperationDiff } from './operation-diff';
+import { setTestStrategy, LegacyTestStrategy } from './strategies/test-strategy';
+import { _setTestWorkspaceRoot } from './utils/workspace-utils';
+
+// Setup test strategy for all tests in this file
+beforeAll(() => {
+  setTestStrategy(new LegacyTestStrategy());
+  _setTestWorkspaceRoot('/');
+});
+
+afterAll(() => {
+  _setTestWorkspaceRoot(undefined);
+});
 
 describe('showOperationDiff', () => {
   // Mock data for testing

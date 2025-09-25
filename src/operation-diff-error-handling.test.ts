@@ -16,17 +16,30 @@
 
 // Jest globals are available without import in our configuration
 import {
-  showOperationDiff,
-  generateEditDiff,
-  generateWriteDiff,
-  generateMultiEditDiff,
-  generateBashDiff,
-  generateReadDiff
+  showOperationDiff
 } from './operation-diff';
+import { generateEditDiff } from './diff-generators/edit-diff';
+import { generateWriteDiff } from './diff-generators/write-diff';
+import { generateMultiEditDiff } from './diff-generators/multiedit-diff';
+import { generateBashDiff } from './diff-generators/bash-diff';
+import { generateReadDiff } from './diff-generators/read-diff';
 import { ChangeType } from './types/operation-index';
+import { setTestStrategy, LegacyTestStrategy } from './strategies/test-strategy';
+import { _setTestWorkspaceRoot } from './utils/workspace-utils';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+
+// Setup test strategy for all tests in this file
+beforeAll(() => {
+  setTestStrategy(new LegacyTestStrategy());
+  // Set root to allow test paths
+  _setTestWorkspaceRoot('/');
+});
+
+afterAll(() => {
+  _setTestWorkspaceRoot(undefined);
+});
 
 describe('Operation Diff Error Handling', () => {
   let tempDir: string;

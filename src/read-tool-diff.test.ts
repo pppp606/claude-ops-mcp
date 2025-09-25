@@ -8,6 +8,18 @@
  */
 
 import type { ReadDiff } from './types/operation-index';
+import { setTestStrategy, LegacyTestStrategy } from './strategies/test-strategy';
+import { _setTestWorkspaceRoot } from './utils/workspace-utils';
+
+// Setup test strategy for all tests in this file
+beforeAll(() => {
+  setTestStrategy(new LegacyTestStrategy());
+  _setTestWorkspaceRoot('/');
+});
+
+afterAll(() => {
+  _setTestWorkspaceRoot(undefined);
+});
 
 // Import the function we're testing (this will fail until implementation exists - RED PHASE)
 import { generateReadDiff } from './operation-diff';

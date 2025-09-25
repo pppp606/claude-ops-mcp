@@ -5,7 +5,20 @@
  */
 
 import { createTwoFilesPatch } from 'diff';
-import type { BashDiff, UnifiedDiff, ChangeType } from './types/operation-index';
+import type { BashDiff, UnifiedDiff } from './types/operation-index';
+import { ChangeType } from './types/operation-index';
+import { setTestStrategy, LegacyTestStrategy } from './strategies/test-strategy';
+import { _setTestWorkspaceRoot } from './utils/workspace-utils';
+
+// Setup test strategy for all tests in this file
+beforeAll(() => {
+  setTestStrategy(new LegacyTestStrategy());
+  _setTestWorkspaceRoot('/');
+});
+
+afterAll(() => {
+  _setTestWorkspaceRoot(undefined);
+});
 
 // Import the function we're testing (this will fail until implementation exists - RED PHASE)
 import { generateBashDiff } from './operation-diff';
@@ -40,7 +53,7 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [{
           filePath: '/tmp/test.txt',
-          changeType: 'create' as ChangeType,
+          changeType: ChangeType.CREATE,
           afterContent: 'Hello World\n'
         }]
       );
@@ -80,7 +93,7 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [{
           filePath: '/src/file.txt',
-          changeType: 'update' as ChangeType,
+          changeType: ChangeType.UPDATE,
           beforeContent: originalContent,
           afterContent: modifiedContent
         }]
@@ -122,7 +135,7 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [{
           filePath: '/tmp/obsolete.txt',
-          changeType: 'delete' as ChangeType,
+          changeType: ChangeType.DELETE,
           beforeContent: originalContent
         }]
       );
@@ -154,12 +167,12 @@ describe('Bash Tool Diff Generation', () => {
         [
           {
             filePath: '/src/component.js',
-            changeType: 'create' as ChangeType,
+            changeType: ChangeType.CREATE,
             afterContent: 'template content'
           },
           {
             filePath: '/src/old.js',
-            changeType: 'delete' as ChangeType,
+            changeType: ChangeType.DELETE,
             beforeContent: 'old content'
           }
         ]
@@ -250,7 +263,7 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [{
           filePath: '/project/package-lock.json',
-          changeType: 'update' as ChangeType,
+          changeType: ChangeType.UPDATE,
           beforeContent: '{"lockfileVersion": 1}',
           afterContent: '{"lockfileVersion": 2, "packages": {}}'
         }]
@@ -304,17 +317,17 @@ describe('Bash Tool Diff Generation', () => {
         [
           {
             filePath: '/dist/bundle.js',
-            changeType: 'create' as ChangeType,
+            changeType: ChangeType.CREATE,
             afterContent: '(function(){console.log("bundled code");})();'
           },
           {
             filePath: '/dist/bundle.js.map',
-            changeType: 'create' as ChangeType,
+            changeType: ChangeType.CREATE,
             afterContent: '{"version":3,"sources":["src/index.js"]}'
           },
           {
             filePath: '/src/index.js',
-            changeType: 'update' as ChangeType,
+            changeType: ChangeType.UPDATE,
             beforeContent: 'console.log("hello");',
             afterContent: 'console.log("hello world");'
           }
@@ -357,7 +370,7 @@ describe('Bash Tool Diff Generation', () => {
         [
           {
             filePath: '/src/components/ui/Button.tsx',
-            changeType: 'create' as ChangeType,
+            changeType: ChangeType.CREATE,
             afterContent: ''
           }
         ]
@@ -384,7 +397,7 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [{
           filePath: '/scripts/deploy.sh',
-          changeType: 'update' as ChangeType,
+          changeType: ChangeType.UPDATE,
           beforeContent: '#!/bin/bash\necho "deploying..."',
           afterContent: '#!/bin/bash\necho "deploying..."' // content unchanged, only permissions
         }]
@@ -434,7 +447,7 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [{
           filePath: '/src/Button.tsx',
-          changeType: 'update' as ChangeType,
+          changeType: ChangeType.UPDATE,
           beforeContent: originalContent,
           afterContent: modifiedContent
         }]
@@ -467,7 +480,7 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [{
           filePath: '/assets/new-logo.png',
-          changeType: 'create' as ChangeType,
+          changeType: ChangeType.CREATE,
           afterContent: '<binary content>' // simplified binary representation
         }]
       );
@@ -617,7 +630,7 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [{
           filePath: '/tmp/test.txt',
-          changeType: 'create' as ChangeType,
+          changeType: ChangeType.CREATE,
           afterContent: 'test\n'
         }]
       );
@@ -667,7 +680,7 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [{
           filePath: '/dist/app.js',
-          changeType: 'create' as ChangeType,
+          changeType: ChangeType.CREATE,
           afterContent: 'bundled content'
         }]
       );
@@ -708,12 +721,12 @@ describe('Bash Tool Diff Generation', () => {
         [
           {
             filePath: '/important/files/config.json',
-            changeType: 'delete' as ChangeType,
+            changeType: ChangeType.DELETE,
             beforeContent: '{"setting": "value"}'
           },
           {
             filePath: '/important/files/data.txt',
-            changeType: 'delete' as ChangeType,
+            changeType: ChangeType.DELETE,
             beforeContent: 'important data'
           }
         ]
@@ -750,13 +763,13 @@ describe('Bash Tool Diff Generation', () => {
         [
           {
             filePath: '/src/config.ts',
-            changeType: 'update' as ChangeType,
+            changeType: ChangeType.UPDATE,
             beforeContent: 'export const config={value:1};',
             afterContent: 'export const config = { value: 1 };'
           },
           {
             filePath: '/src/utils.ts',
-            changeType: 'update' as ChangeType,
+            changeType: ChangeType.UPDATE,
             beforeContent: 'function helper(){return true;}',
             afterContent: 'function helper() {\n  return true;\n}'
           }
@@ -793,7 +806,7 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [{
           filePath: '/tmp/secret.txt',
-          changeType: 'create' as ChangeType,
+          changeType: ChangeType.CREATE,
           afterContent: 'super-secret-key-123\n'
         }]
       );
@@ -821,7 +834,7 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [{
           filePath: '/tmp/large.txt',
-          changeType: 'create' as ChangeType,
+          changeType: ChangeType.CREATE,
           afterContent: largeFileContent
         }]
       );

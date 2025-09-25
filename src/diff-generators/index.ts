@@ -7,6 +7,8 @@
 export { generateEditDiff } from './edit-diff';
 export { generateWriteDiff } from './write-diff';
 export { generateReadDiff } from './read-diff';
+export { generateMultiEditDiff } from './multiedit-diff';
+export { generateBashDiff } from './bash-diff';
 
 // Re-export types for convenience
 export type {

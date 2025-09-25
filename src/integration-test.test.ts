@@ -17,7 +17,19 @@ import { showOperationDiff, generateMultiEditDiff, generateBashDiff } from './op
 import { generateEditDiff, generateWriteDiff, generateReadDiff } from './operation-diff';
 import type { OperationIndex, OperationDiff } from './types/operation-index';
 import { ChangeType } from './types/operation-index';
+import { setTestStrategy, LegacyTestStrategy } from './strategies/test-strategy';
+import { _setTestWorkspaceRoot } from './utils/workspace-utils';
 import { performance } from 'perf_hooks';
+
+// Setup test environment
+beforeAll(() => {
+  setTestStrategy(new LegacyTestStrategy());
+  _setTestWorkspaceRoot('/');
+});
+
+afterAll(() => {
+  _setTestWorkspaceRoot(undefined);
+});
 
 // Real-world log data samples based on actual Claude Code usage patterns
 const REAL_LOG_SAMPLES = {

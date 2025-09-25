@@ -1,5 +1,17 @@
 import type { MultiEditDiff, UnifiedDiff } from './types/operation-index';
 import { generateMultiEditDiff } from './operation-diff';
+import { setTestStrategy, LegacyTestStrategy } from './strategies/test-strategy';
+import { _setTestWorkspaceRoot } from './utils/workspace-utils';
+
+// Setup test strategy for all tests in this file
+beforeAll(() => {
+  setTestStrategy(new LegacyTestStrategy());
+  _setTestWorkspaceRoot('/');
+});
+
+afterAll(() => {
+  _setTestWorkspaceRoot(undefined);
+});
 
 describe('generateMultiEditDiff - MultiEdit Tool Diff Generation', () => {
   // Test data for various scenarios
