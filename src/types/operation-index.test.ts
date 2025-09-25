@@ -9,7 +9,7 @@ describe('OperationIndex', () => {
         timestamp: '2025-09-18T12:00:00.000Z',
         tool: 'Edit',
         summary: 'Test operation summary',
-        changeType: ChangeType.UPDATE
+        changeType: ChangeType.UPDATE,
       };
 
       expect(operation.id).toBeDefined();
@@ -30,7 +30,7 @@ describe('OperationIndex', () => {
         tool: 'Write',
         filePath: '/path/to/file.ts',
         summary: 'Created new file',
-        changeType: ChangeType.CREATE
+        changeType: ChangeType.CREATE,
       };
 
       const operationWithoutFile: OperationIndex = {
@@ -38,7 +38,7 @@ describe('OperationIndex', () => {
         timestamp: '2025-09-18T12:00:00.000Z',
         tool: 'Read',
         summary: 'Read operation without specific file',
-        changeType: ChangeType.READ
+        changeType: ChangeType.READ,
       };
 
       expect(operationWithFile.filePath).toBe('/path/to/file.ts');
@@ -51,7 +51,7 @@ describe('OperationIndex', () => {
         timestamp: '2025-09-18T12:34:56.789Z',
         tool: 'Edit',
         summary: 'Test ISO timestamp',
-        changeType: ChangeType.UPDATE
+        changeType: ChangeType.UPDATE,
       };
 
       // Test that the timestamp follows ISO 8601 pattern
@@ -68,7 +68,7 @@ describe('OperationIndex', () => {
           timestamp: '2025-09-18T12:00:00.000Z',
           tool,
           summary: `Operation using ${tool}`,
-          changeType: ChangeType.READ
+          changeType: ChangeType.READ,
         };
 
         expect(operation.tool).toBe(tool);
@@ -98,13 +98,25 @@ describe('OperationIndex', () => {
         id: 'test-enum',
         timestamp: '2025-09-18T12:00:00.000Z',
         tool: 'Test',
-        summary: 'Testing enum values'
+        summary: 'Testing enum values',
       };
 
-      const createOp: OperationIndex = { ...baseOperation, changeType: ChangeType.CREATE };
-      const updateOp: OperationIndex = { ...baseOperation, changeType: ChangeType.UPDATE };
-      const deleteOp: OperationIndex = { ...baseOperation, changeType: ChangeType.DELETE };
-      const readOp: OperationIndex = { ...baseOperation, changeType: ChangeType.READ };
+      const createOp: OperationIndex = {
+        ...baseOperation,
+        changeType: ChangeType.CREATE,
+      };
+      const updateOp: OperationIndex = {
+        ...baseOperation,
+        changeType: ChangeType.UPDATE,
+      };
+      const deleteOp: OperationIndex = {
+        ...baseOperation,
+        changeType: ChangeType.DELETE,
+      };
+      const readOp: OperationIndex = {
+        ...baseOperation,
+        changeType: ChangeType.READ,
+      };
 
       expect(createOp.changeType).toBe('create');
       expect(updateOp.changeType).toBe('update');

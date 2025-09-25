@@ -12,7 +12,7 @@ import {
   FileSystemError,
   InputValidator,
   ResourceValidator,
-  SecurityValidator
+  SecurityValidator,
 } from '../error-handling';
 import { generateOptimizedDiff } from '../utils/performance-utils';
 import { getTestStrategy } from '../strategies/test-strategy';
@@ -56,30 +56,56 @@ export async function generateWriteDiff(
     // Check for invalid filename characters
     const invalidChars = /[<>:|?*]/;
     if (invalidChars.test(path.basename(filePath))) {
-      throw new ValidationError('Filename contains invalid characters', 'filePath', filePath);
+      throw new ValidationError(
+        'Filename contains invalid characters',
+        'filePath',
+        filePath
+      );
     }
 
     // Handle file system errors using strategy
     const strategy = getTestStrategy();
     if (strategy.shouldTriggerFileSystemError(filePath, 'write')) {
-      if (filePath.includes('/readonly/') || filePath.includes('readonly-fail')) {
-        throw new FileSystemError('Permission denied: directory is read-only', filePath, 'write');
+      if (
+        filePath.includes('/readonly/') ||
+        filePath.includes('readonly-fail')
+      ) {
+        throw new FileSystemError(
+          'Permission denied: directory is read-only',
+          filePath,
+          'write'
+        );
       }
 
       if (filePath === '/dev/full' || filePath.includes('disk-full')) {
         throw new FileSystemError('No space left on device', filePath, 'write');
       }
 
-      if (filePath.includes('Case-Sensitive.txt') && filePath.includes('case-sensitive.txt')) {
-        throw new FileSystemError('File system case sensitivity conflict', filePath, 'write');
+      if (
+        filePath.includes('Case-Sensitive.txt') &&
+        filePath.includes('case-sensitive.txt')
+      ) {
+        throw new FileSystemError(
+          'File system case sensitivity conflict',
+          filePath,
+          'write'
+        );
       }
 
       if (filePath.includes('locked')) {
-        throw new FileSystemError('File is locked or in use', filePath, 'write');
+        throw new FileSystemError(
+          'File is locked or in use',
+          filePath,
+          'write'
+        );
       }
 
       if (filePath.includes('cleanup-fail')) {
-        throw new FileSystemError('Failed to cleanup temporary resources', filePath, 'cleanup');
+        throw new FileSystemError(
+          'Failed to cleanup temporary resources',
+          filePath,
+          'cleanup'
+        );
       }
 
       if (filePath.includes('file-handles')) {
@@ -89,8 +115,16 @@ export async function generateWriteDiff(
 
     // Check if file has extension for content type detection (except for special system files)
     const ext = path.extname(filePath);
-    if (!ext && !filePath.startsWith('/dev/') && !filePath.includes('disk-full')) {
-      throw new ValidationError('File extension required for content type detection', 'filePath', filePath);
+    if (
+      !ext &&
+      !filePath.startsWith('/dev/') &&
+      !filePath.includes('disk-full')
+    ) {
+      throw new ValidationError(
+        'File extension required for content type detection',
+        'filePath',
+        filePath
+      );
     }
 
     // Security validation
@@ -99,12 +133,20 @@ export async function generateWriteDiff(
 
     // Check for binary content corruption (only for specific error test cases)
     if (newContent.includes('\uFFFD') && newContent.length < 10) {
-      throw new ValidationError('Invalid binary content encoding', 'newContent', 'binary_content');
+      throw new ValidationError(
+        'Invalid binary content encoding',
+        'newContent',
+        'binary_content'
+      );
     }
 
     // Handle JSON serialization errors using strategy
     if (strategy.shouldTriggerJsonSerializationError(filePath, newContent)) {
-      throw new ValidationError('JSON serialization failed', 'newContent', 'serialization_error');
+      throw new ValidationError(
+        'JSON serialization failed',
+        'newContent',
+        'serialization_error'
+      );
     }
 
     // Determine if this is a new file creation
@@ -132,8 +174,8 @@ export async function generateWriteDiff(
         filename: filePath,
         oldVersion,
         newVersion: newContent,
-        diffText
-      }
+        diffText,
+      },
     };
 
     // Only add previousContent if it exists (not undefined)
@@ -144,9 +186,11 @@ export async function generateWriteDiff(
     return result;
   } catch (error) {
     // Re-throw known error types
-    if (error instanceof ValidationError ||
-        error instanceof SecurityError ||
-        error instanceof FileSystemError) {
+    if (
+      error instanceof ValidationError ||
+      error instanceof SecurityError ||
+      error instanceof FileSystemError
+    ) {
       throw error;
     }
 
@@ -156,6 +200,10 @@ export async function generateWriteDiff(
     }
 
     // Fallback for unknown errors
-    throw new ToolError(`Failed to generate write diff: ${error}`, 'Write', filePath);
+    throw new ToolError(
+      `Failed to generate write diff: ${error}`,
+      'Write',
+      filePath
+    );
   }
 }

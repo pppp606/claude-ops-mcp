@@ -19,5 +19,5 @@ export type {
   BashDiff,
   OperationDiff,
   UnifiedDiff,
-  ChangeType
+  ChangeType,
 } from '../types/operation-index';

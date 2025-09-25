@@ -27,7 +27,7 @@ export enum ChangeType {
   /** Indicates a file or entity was removed */
   DELETE = 'delete',
   /** Indicates a read-only operation with no modifications */
-  READ = 'read'
+  READ = 'read',
 }
 
 /**
@@ -329,7 +329,12 @@ export interface ReadDiff {
 /**
  * Union type representing all possible tool-specific diff formats.
  */
-export type ToolDiff = EditDiff | WriteDiff | MultiEditDiff | BashDiff | ReadDiff;
+export type ToolDiff =
+  | EditDiff
+  | WriteDiff
+  | MultiEditDiff
+  | BashDiff
+  | ReadDiff;
 
 /**
  * Interface representing detailed difference information for an operation.

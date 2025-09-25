@@ -22,7 +22,10 @@ export interface TestStrategy {
   /**
    * Determines if mixed line ending errors should be triggered
    */
-  shouldTriggerMixedLineEndingError(filePath: string, content?: string): boolean;
+  shouldTriggerMixedLineEndingError(
+    filePath: string,
+    content?: string
+  ): boolean;
 
   /**
    * Determines if file system permission errors should be triggered
@@ -37,12 +40,18 @@ export interface TestStrategy {
   /**
    * Determines if circular edit dependency detection should be triggered
    */
-  shouldTriggerCircularDependencyError(filePath: string, edits?: any[]): boolean;
+  shouldTriggerCircularDependencyError(
+    filePath: string,
+    edits?: any[]
+  ): boolean;
 
   /**
    * Determines if JSON serialization errors should be triggered
    */
-  shouldTriggerJsonSerializationError(filePath: string, content?: string): boolean;
+  shouldTriggerJsonSerializationError(
+    filePath: string,
+    content?: string
+  ): boolean;
 }
 
 /**
@@ -87,52 +96,74 @@ export class LegacyTestStrategy implements TestStrategy {
   }
 
   shouldTriggerUnicodeError(filePath: string, content?: string): boolean {
-    return filePath.includes('unicode.txt') &&
-           !!content && /🚀|émojis|中文/.test(content);
+    return (
+      filePath.includes('unicode.txt') &&
+      !!content &&
+      /🚀|émojis|中文/.test(content)
+    );
   }
 
-  shouldTriggerMixedLineEndingError(filePath: string, content?: string): boolean {
-    return filePath.includes('mixed.txt') &&
-           !!content &&
-           content.includes('\r\n') &&
-           content.includes('\n') &&
-           content.includes('\r');
+  shouldTriggerMixedLineEndingError(
+    filePath: string,
+    content?: string
+  ): boolean {
+    return (
+      filePath.includes('mixed.txt') &&
+      !!content &&
+      content.includes('\r\n') &&
+      content.includes('\n') &&
+      content.includes('\r')
+    );
   }
 
   shouldTriggerFileSystemError(filePath: string, operation?: string): boolean {
     if (operation === 'write') {
-      return filePath.includes('/readonly/') ||
-             filePath.includes('readonly-fail') ||
-             filePath === '/dev/full' ||
-             filePath.includes('disk-full') ||
-             filePath.includes('locked') ||
-             filePath.includes('cleanup-fail') ||
-             filePath.includes('file-handles');
+      return (
+        filePath.includes('/readonly/') ||
+        filePath.includes('readonly-fail') ||
+        filePath === '/dev/full' ||
+        filePath.includes('disk-full') ||
+        filePath.includes('locked') ||
+        filePath.includes('cleanup-fail') ||
+        filePath.includes('file-handles')
+      );
     }
     return false;
   }
 
   shouldSkipLineLengthValidation(filePath: string): boolean {
-    return filePath.includes('large') ||
-           filePath.includes('performance') ||
-           filePath.includes('huge');
+    return (
+      filePath.includes('large') ||
+      filePath.includes('performance') ||
+      filePath.includes('huge')
+    );
   }
 
-  shouldTriggerCircularDependencyError(filePath: string, edits?: any[]): boolean {
+  shouldTriggerCircularDependencyError(
+    filePath: string,
+    edits?: any[]
+  ): boolean {
     if (!filePath.includes('circular') || !edits || edits.length !== 3) {
       return false;
     }
 
     const editStrings = edits.map(e => `${e.oldString}->${e.newString}`);
-    return editStrings.includes('a->b') &&
-           editStrings.includes('b->c') &&
-           editStrings.includes('c->a');
+    return (
+      editStrings.includes('a->b') &&
+      editStrings.includes('b->c') &&
+      editStrings.includes('c->a')
+    );
   }
 
-  shouldTriggerJsonSerializationError(filePath: string, content?: string): boolean {
-    return filePath.includes('json-fail') &&
-           !!content &&
-           content.includes('circular');
+  shouldTriggerJsonSerializationError(
+    filePath: string,
+    content?: string
+  ): boolean {
+    return (
+      filePath.includes('json-fail') &&
+      !!content &&
+      content.includes('circular')
+    );
   }
 }
 

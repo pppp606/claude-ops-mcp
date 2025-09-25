@@ -83,7 +83,7 @@ function createSummaryDiff(
       `// Old: ${oldLines.length} lines (${oldContent.length} chars)`,
       `// New: ${newLines.length} lines (${newContent.length} chars)`,
       `// Change: ${newLines.length - oldLines.length > 0 ? '+' : ''}${newLines.length - oldLines.length} lines`,
-      ''
+      '',
     ];
 
     // Show first few lines if content is different
@@ -103,14 +103,16 @@ function createSummaryDiff(
   }
 
   // For medium files, show truncated diff
-  return createTwoFilesPatch(
-    oldPath,
-    newPath,
-    oldContent.substring(0, MAX_FULL_DIFF_SIZE / 2),
-    newContent.substring(0, MAX_FULL_DIFF_SIZE / 2),
-    oldHeader,
-    newHeader
-  ) + '\n// ... content truncated for performance';
+  return (
+    createTwoFilesPatch(
+      oldPath,
+      newPath,
+      oldContent.substring(0, MAX_FULL_DIFF_SIZE / 2),
+      newContent.substring(0, MAX_FULL_DIFF_SIZE / 2),
+      oldHeader,
+      newHeader
+    ) + '\n// ... content truncated for performance'
+  );
 }
 
 /**
@@ -128,10 +130,14 @@ export function performOptimizedStringReplace(
       return content.split(oldString).join(newString);
     } else {
       const index = content.indexOf(oldString);
-      if (index === -1) {return content;}
-      return content.substring(0, index) +
-             newString +
-             content.substring(index + oldString.length);
+      if (index === -1) {
+        return content;
+      }
+      return (
+        content.substring(0, index) +
+        newString +
+        content.substring(index + oldString.length)
+      );
     }
   }
 
@@ -143,7 +149,9 @@ export function performOptimizedStringReplace(
   } else {
     // Single replacement - find index and replace
     const index = content.indexOf(oldString);
-    if (index === -1) {return content;}
+    if (index === -1) {
+      return content;
+    }
 
     // For very large strings, use buffer-like approach
     if (content.length > 1000000) {
@@ -151,9 +159,11 @@ export function performOptimizedStringReplace(
       const after = content.substring(index + oldString.length);
       return before + newString + after;
     } else {
-      return content.substring(0, index) +
-             newString +
-             content.substring(index + oldString.length);
+      return (
+        content.substring(0, index) +
+        newString +
+        content.substring(index + oldString.length)
+      );
     }
   }
 }

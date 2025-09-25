@@ -11,9 +11,12 @@ import {
   ToolError,
   InputValidator,
   ResourceValidator,
-  SecurityValidator
+  SecurityValidator,
 } from '../error-handling';
-import { generateOptimizedDiff, performOptimizedStringReplace } from '../utils/performance-utils';
+import {
+  generateOptimizedDiff,
+  performOptimizedStringReplace,
+} from '../utils/performance-utils';
 import { getTestStrategy } from '../strategies/test-strategy';
 
 /**
@@ -37,20 +40,22 @@ export async function generateMultiEditDiff(
     newString: string;
     replaceAll?: boolean;
   }>
-): Promise<MultiEditDiff & {
-  intermediateStates?: Array<{
-    content: string;
-    diffFromPrevious: string;
-  }>;
-  rollbackSteps?: Array<{
-    editIndex: number;
-    reverseEdit: {
-      oldString: string;
-      newString: string;
-      replaceAll: boolean;
-    };
-  }>;
-}> {
+): Promise<
+  MultiEditDiff & {
+    intermediateStates?: Array<{
+      content: string;
+      diffFromPrevious: string;
+    }>;
+    rollbackSteps?: Array<{
+      editIndex: number;
+      reverseEdit: {
+        oldString: string;
+        newString: string;
+        replaceAll: boolean;
+      };
+    }>;
+  }
+> {
   try {
     // Enhanced input validation
     InputValidator.validateFilePath(filePath, 'filePath');
@@ -60,7 +65,8 @@ export async function generateMultiEditDiff(
     // Content size validation - check size first before line analysis
     ResourceValidator.validateContentSize(originalContent);
     const strategy = getTestStrategy();
-    if (originalContent.length < 10 * 1024 * 1024) { // Only check line length for smaller content
+    if (originalContent.length < 10 * 1024 * 1024) {
+      // Only check line length for smaller content
       try {
         ResourceValidator.validateLineLength(originalContent);
       } catch (error) {
@@ -80,19 +86,34 @@ export async function generateMultiEditDiff(
 
       // Check for object structure
       if (!edit || typeof edit !== 'object') {
-        throw new ValidationError(`Invalid edit object at index ${i}`, 'edits', edit);
+        throw new ValidationError(
+          `Invalid edit object at index ${i}`,
+          'edits',
+          edit
+        );
       }
 
       // Check for circular references
       try {
         JSON.stringify(edit);
       } catch (circularError) {
-        throw new ValidationError('Invalid edit object structure', 'edits', `circular reference at index ${i}`);
+        throw new ValidationError(
+          'Invalid edit object structure',
+          'edits',
+          `circular reference at index ${i}`
+        );
       }
 
       // Validate string properties
-      if (typeof edit.oldString !== 'string' || typeof edit.newString !== 'string') {
-        throw new ValidationError(`Invalid edit at index ${i}: oldString and newString must be strings`, 'edits', edit);
+      if (
+        typeof edit.oldString !== 'string' ||
+        typeof edit.newString !== 'string'
+      ) {
+        throw new ValidationError(
+          `Invalid edit at index ${i}: oldString and newString must be strings`,
+          'edits',
+          edit
+        );
       }
 
       // Security validation for each edit
@@ -102,7 +123,11 @@ export async function generateMultiEditDiff(
 
     // Check for circular edit dependencies using strategy
     if (strategy.shouldTriggerCircularDependencyError(filePath, edits)) {
-      throw new ValidationError('Circular edit dependencies detected', 'edits', 'circular_dependency');
+      throw new ValidationError(
+        'Circular edit dependencies detected',
+        'edits',
+        'circular_dependency'
+      );
     }
 
     // Handle empty edits array
@@ -114,10 +139,10 @@ export async function generateMultiEditDiff(
           filename: filePath,
           oldVersion: originalContent,
           newVersion: originalContent,
-          diffText: ''
+          diffText: '',
         },
         intermediateStates: [],
-        rollbackSteps: []
+        rollbackSteps: [],
       };
     }
 
@@ -140,7 +165,7 @@ export async function generateMultiEditDiff(
     const normalizedEdits = edits.map(edit => ({
       oldString: edit.oldString,
       newString: edit.newString,
-      replaceAll: edit.replaceAll ?? false
+      replaceAll: edit.replaceAll ?? false,
     }));
 
     for (let i = 0; i < normalizedEdits.length; i++) {
@@ -152,7 +177,7 @@ export async function generateMultiEditDiff(
         // No change needed, but still track the "edit" for completeness
         intermediateStates.push({
           content: currentContent,
-          diffFromPrevious: ''
+          diffFromPrevious: '',
         });
 
         rollbackSteps.push({
@@ -160,8 +185,8 @@ export async function generateMultiEditDiff(
           reverseEdit: {
             oldString: edit.newString,
             newString: edit.oldString,
-            replaceAll: edit.replaceAll
-          }
+            replaceAll: edit.replaceAll,
+          },
         });
 
         continue;
@@ -190,7 +215,7 @@ export async function generateMultiEditDiff(
       // Track intermediate state
       intermediateStates.push({
         content: currentContent,
-        diffFromPrevious: ''
+        diffFromPrevious: '',
       });
 
       // Track rollback step
@@ -199,20 +224,23 @@ export async function generateMultiEditDiff(
         reverseEdit: {
           oldString: edit.newString,
           newString: edit.oldString,
-          replaceAll: edit.replaceAll
-        }
+          replaceAll: edit.replaceAll,
+        },
       });
     }
 
     // Generate final unified diff from original to final content with optimization
-    const finalDiffText = originalContent === currentContent ? '' : generateOptimizedDiff(
-      filePath,
-      filePath,
-      originalContent,
-      currentContent,
-      'Original',
-      'Modified'
-    );
+    const finalDiffText =
+      originalContent === currentContent
+        ? ''
+        : generateOptimizedDiff(
+            filePath,
+            filePath,
+            originalContent,
+            currentContent,
+            'Original',
+            'Modified'
+          );
 
     return {
       tool: 'MultiEdit',
@@ -221,16 +249,18 @@ export async function generateMultiEditDiff(
         filename: filePath,
         oldVersion: originalContent,
         newVersion: currentContent,
-        diffText: finalDiffText
+        diffText: finalDiffText,
       },
       intermediateStates,
-      rollbackSteps
+      rollbackSteps,
     };
   } catch (error) {
     // Re-throw known error types
-    if (error instanceof ValidationError ||
-        error instanceof ToolError ||
-        error instanceof SecurityError) {
+    if (
+      error instanceof ValidationError ||
+      error instanceof ToolError ||
+      error instanceof SecurityError
+    ) {
       throw error;
     }
 
@@ -240,6 +270,10 @@ export async function generateMultiEditDiff(
     }
 
     // Fallback for unknown errors
-    throw new ToolError(`Failed to generate multi-edit diff: ${error}`, 'MultiEdit', filePath);
+    throw new ToolError(
+      `Failed to generate multi-edit diff: ${error}`,
+      'MultiEdit',
+      filePath
+    );
   }
 }

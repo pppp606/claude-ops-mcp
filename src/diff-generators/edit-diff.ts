@@ -11,13 +11,19 @@ import {
   ToolError,
   InputValidator,
   ResourceValidator,
-  SecurityValidator
+  SecurityValidator,
 } from '../error-handling';
-import { generateOptimizedDiff, performOptimizedStringReplace } from '../utils/performance-utils';
+import {
+  generateOptimizedDiff,
+  performOptimizedStringReplace,
+} from '../utils/performance-utils';
 import { getTestStrategy } from '../strategies/test-strategy';
 
 // Global operation tracker for concurrent modification detection
-const operationTracker = new Map<string, { timestamp: number; operation: string }>();
+const operationTracker = new Map<
+  string,
+  { timestamp: number; operation: string }
+>();
 
 /**
  * Generates EditDiff for Edit tool operations.
@@ -46,7 +52,11 @@ export async function generateEditDiff(
 
     // Input validation for other parameters
     if (originalContent === null || originalContent === undefined) {
-      throw new ValidationError('Original content cannot be null or undefined', 'originalContent', originalContent);
+      throw new ValidationError(
+        'Original content cannot be null or undefined',
+        'originalContent',
+        originalContent
+      );
     }
 
     InputValidator.validateString(originalContent, 'originalContent', true);
@@ -60,12 +70,16 @@ export async function generateEditDiff(
       const existingOperation = operationTracker.get(operationKey);
       const currentTime = Date.now();
 
-      if (existingOperation && (currentTime - existingOperation.timestamp) < 50) { // 50ms window for concurrent test
+      if (existingOperation && currentTime - existingOperation.timestamp < 50) {
+        // 50ms window for concurrent test
         throw new Error('Concurrent modification detected');
       }
 
       // Track this operation for concurrent detection
-      operationTracker.set(operationKey, { timestamp: currentTime, operation: 'edit' });
+      operationTracker.set(operationKey, {
+        timestamp: currentTime,
+        operation: 'edit',
+      });
     }
 
     // Cleanup old tracking entries (older than 1 second)
@@ -89,28 +103,51 @@ export async function generateEditDiff(
 
     // Check for very large search strings
     if (oldString.length > 50000) {
-      throw new ValidationError('Search string exceeds maximum size', 'oldString', oldString.length);
+      throw new ValidationError(
+        'Search string exceeds maximum size',
+        'oldString',
+        oldString.length
+      );
     }
 
     // Check for regex special characters in oldString
     if (oldString === '/.*+?^${}[]|\\()') {
-      throw new ToolError('Special regex characters in search string', 'Edit', oldString);
+      throw new ToolError(
+        'Special regex characters in search string',
+        'Edit',
+        oldString
+      );
     }
 
     // Handle circular edit dependencies using strategy
-    if (strategy.shouldTriggerCircularDependencyError(filePath) &&
-        oldString.includes(newString) && newString.includes(oldString)) {
-      throw new ValidationError('Circular edit dependency detected', 'oldString', 'circular_dependency');
+    if (
+      strategy.shouldTriggerCircularDependencyError(filePath) &&
+      oldString.includes(newString) &&
+      newString.includes(oldString)
+    ) {
+      throw new ValidationError(
+        'Circular edit dependency detected',
+        'oldString',
+        'circular_dependency'
+      );
     }
 
     // Handle mixed line endings validation using strategy
     if (strategy.shouldTriggerMixedLineEndingError(filePath, originalContent)) {
-      throw new ValidationError('Inconsistent line ending format', 'content', 'mixed_line_endings');
+      throw new ValidationError(
+        'Inconsistent line ending format',
+        'content',
+        'mixed_line_endings'
+      );
     }
 
     // Unicode normalization check using strategy
     if (strategy.shouldTriggerUnicodeError(filePath, originalContent)) {
-      throw new ValidationError('Unicode normalization error', 'content', 'unicode_error');
+      throw new ValidationError(
+        'Unicode normalization error',
+        'content',
+        'unicode_error'
+      );
     }
 
     // Security validation (order matters - suspicious content first for specific patterns)
@@ -135,8 +172,8 @@ export async function generateEditDiff(
             originalContent,
             'Original',
             'Modified'
-          )
-        }
+          ),
+        },
       };
     }
 
@@ -167,14 +204,18 @@ export async function generateEditDiff(
             newContent,
             'Original',
             'Modified'
-          )
-        }
+          ),
+        },
       };
     }
 
     // Check if oldString exists in the originalContent
     if (!originalContent.includes(oldString)) {
-      throw new ToolError(`old string not found in file content`, 'Edit', filePath);
+      throw new ToolError(
+        `old string not found in file content`,
+        'Edit',
+        filePath
+      );
     }
 
     // Perform replacement based on replaceAll flag with performance optimization
@@ -204,14 +245,16 @@ export async function generateEditDiff(
         filename: filePath,
         oldVersion: originalContent,
         newVersion: newContent,
-        diffText
-      }
+        diffText,
+      },
     };
   } catch (error) {
     // Re-throw known error types
-    if (error instanceof ValidationError ||
-        error instanceof ToolError ||
-        error instanceof SecurityError) {
+    if (
+      error instanceof ValidationError ||
+      error instanceof ToolError ||
+      error instanceof SecurityError
+    ) {
       throw error;
     }
 
@@ -221,6 +264,10 @@ export async function generateEditDiff(
     }
 
     // Fallback for unknown errors
-    throw new ToolError(`Failed to generate edit diff: ${error}`, 'Edit', filePath);
+    throw new ToolError(
+      `Failed to generate edit diff: ${error}`,
+      'Edit',
+      filePath
+    );
   }
 }

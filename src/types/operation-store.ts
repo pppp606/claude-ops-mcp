@@ -62,11 +62,14 @@ export class MockOperationStore implements OperationStore {
         replaceAll: false,
         unifiedDiff: {
           filename: '/src/components/Button.tsx',
-          oldVersion: 'const Button = () => { return <button style={{background: blue;}}>Click</button>; };',
-          newVersion: 'const Button = () => { return <button style={{background: green;}}>Click</button>; };',
-          diffText: '@@ -1,1 +1,1 @@\n-const Button = () => { return <button style={{background: blue;}}>Click</button>; };\n+const Button = () => { return <button style={{background: green;}}>Click</button>; };'
-        }
-      }
+          oldVersion:
+            'const Button = () => { return <button style={{background: blue;}}>Click</button>; };',
+          newVersion:
+            'const Button = () => { return <button style={{background: green;}}>Click</button>; };',
+          diffText:
+            '@@ -1,1 +1,1 @@\n-const Button = () => { return <button style={{background: blue;}}>Click</button>; };\n+const Button = () => { return <button style={{background: green;}}>Click</button>; };',
+        },
+      },
     });
 
     this.mockOperations.set('write-op-456', {
@@ -84,9 +87,10 @@ export class MockOperationStore implements OperationStore {
           filename: '/src/utils/helper.ts',
           oldVersion: '',
           newVersion: 'export function helper() { return "helper function"; }',
-          diffText: '@@ -0,0 +1,1 @@\n+export function helper() { return "helper function"; }'
-        }
-      }
+          diffText:
+            '@@ -0,0 +1,1 @@\n+export function helper() { return "helper function"; }',
+        },
+      },
     });
 
     this.mockOperations.set('multi-edit-op-789', {
@@ -102,21 +106,22 @@ export class MockOperationStore implements OperationStore {
           {
             oldString: 'oldEndpoint',
             newString: 'newEndpoint',
-            replaceAll: false
+            replaceAll: false,
           },
           {
             oldString: 'oldMethod',
             newString: 'newMethod',
-            replaceAll: true
-          }
+            replaceAll: true,
+          },
         ],
         unifiedDiff: {
           filename: '/src/services/api.ts',
           oldVersion: 'const api = { oldEndpoint, oldMethod };',
           newVersion: 'const api = { newEndpoint, newMethod };',
-          diffText: '@@ -1,1 +1,1 @@\n-const api = { oldEndpoint, oldMethod };\n+const api = { newEndpoint, newMethod };'
-        }
-      }
+          diffText:
+            '@@ -1,1 +1,1 @@\n-const api = { oldEndpoint, oldMethod };\n+const api = { newEndpoint, newMethod };',
+        },
+      },
     });
 
     this.mockOperations.set('bash-op-101', {
@@ -134,10 +139,10 @@ export class MockOperationStore implements OperationStore {
         affectedFiles: [
           {
             filePath: '/dist/bundle.js',
-            changeType: ChangeType.CREATE
-          }
-        ]
-      }
+            changeType: ChangeType.CREATE,
+          },
+        ],
+      },
     });
 
     this.mockOperations.set('read-op-202', {
@@ -150,8 +155,8 @@ export class MockOperationStore implements OperationStore {
       diff: {
         tool: 'Read',
         content: '{"setting1": "value1", "setting2": "value2"}',
-        linesRead: 4
-      }
+        linesRead: 4,
+      },
     });
   }
 
@@ -167,7 +172,7 @@ export class MockOperationStore implements OperationStore {
       timestamp: operation.timestamp,
       tool: operation.tool,
       summary: operation.summary,
-      changeType: operation.changeType
+      changeType: operation.changeType,
     };
 
     if (operation.filePath) {

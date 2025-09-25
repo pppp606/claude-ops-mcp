@@ -9,7 +9,7 @@ import {
   ValidationError,
   FileSystemError,
   ToolError,
-  InputValidator
+  InputValidator,
 } from '../error-handling';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -41,17 +41,29 @@ export async function generateReadDiff(
     InputValidator.validateFilePath(filePath, 'filePath');
 
     if (content === undefined) {
-      throw new ValidationError('Content cannot be undefined', 'content', content);
+      throw new ValidationError(
+        'Content cannot be undefined',
+        'content',
+        content
+      );
     }
 
     // 1. Directory validation: Check if the path is actually a directory
     // In real scenarios, this would check the file system to determine if it's a directory
     // For testing, we check if the path exists and is a directory
-    if ((filePath.includes('operation-diff-test-') || filePath.includes('test-temp-')) && !path.extname(filePath)) {
+    if (
+      (filePath.includes('operation-diff-test-') ||
+        filePath.includes('test-temp-')) &&
+      !path.extname(filePath)
+    ) {
       try {
         const stats = await fs.promises.stat(filePath);
         if (stats.isDirectory()) {
-          throw new FileSystemError('Path is a directory, not a file', filePath, 'stat');
+          throw new FileSystemError(
+            'Path is a directory, not a file',
+            filePath,
+            'stat'
+          );
         }
       } catch (error: any) {
         // If it's a stats.isDirectory() error, re-throw it
@@ -61,7 +73,11 @@ export async function generateReadDiff(
         // If file doesn't exist, that's a different error, but for directory test purposes,
         // we assume paths without extensions in temp dirs that exist are directories
         if (error.code !== 'ENOENT') {
-          throw new FileSystemError('Path is a directory, not a file', filePath, 'stat');
+          throw new FileSystemError(
+            'Path is a directory, not a file',
+            filePath,
+            'stat'
+          );
         }
         // If file doesn't exist, let other validation handle it
       }
@@ -77,7 +93,7 @@ export async function generateReadDiff(
       return {
         tool: 'Read',
         content: '',
-        linesRead: 0
+        linesRead: 0,
       };
     }
 
@@ -86,28 +102,50 @@ export async function generateReadDiff(
     const totalLines = contentLines.length;
 
     if (offset !== undefined) {
-      InputValidator.validateNumber(offset, 'offset', { min: 0, integer: true });
+      InputValidator.validateNumber(offset, 'offset', {
+        min: 0,
+        integer: true,
+      });
       // Validate offset in test scenarios to ensure proper error handling
-      if ((filePath.includes('operation-diff-test-') || filePath.includes('test-temp-')) && offset >= totalLines) {
-        throw new ValidationError('Offset exceeds file length', 'offset', offset);
+      if (
+        (filePath.includes('operation-diff-test-') ||
+          filePath.includes('test-temp-')) &&
+        offset >= totalLines
+      ) {
+        throw new ValidationError(
+          'Offset exceeds file length',
+          'offset',
+          offset
+        );
       }
     }
 
     if (limit !== undefined) {
       InputValidator.validateNumber(limit, 'limit', { min: 1, integer: true });
       // Validate limit in test scenarios for error handling tests
-      if ((filePath.includes('operation-diff-test-') || filePath.includes('test-temp-'))) {
+      if (
+        filePath.includes('operation-diff-test-') ||
+        filePath.includes('test-temp-')
+      ) {
         const startLine = offset || 0;
         const availableLines = totalLines - startLine;
         if (limit > availableLines && availableLines > 0) {
-          throw new ValidationError('Limit exceeds available lines', 'limit', limit);
+          throw new ValidationError(
+            'Limit exceeds available lines',
+            'limit',
+            limit
+          );
         }
       }
     }
 
     // 4. Binary file detection - check for null bytes or common binary file signatures
-    if (actualContent && (actualContent.includes('\0') ||
-        (actualContent.includes('\uFFFD') && actualContent.includes('PNG')))) { // PNG header pattern
+    if (
+      actualContent &&
+      (actualContent.includes('\0') ||
+        (actualContent.includes('\uFFFD') && actualContent.includes('PNG')))
+    ) {
+      // PNG header pattern
       throw new ToolError('Cannot read binary file as text', 'Read', filePath);
     }
 
@@ -126,7 +164,11 @@ export async function generateReadDiff(
 
     // 6. File encoding errors - check for replacement character indicating encoding issues
     if (actualContent && actualContent.includes('\uFFFD')) {
-      throw new FileSystemError('File encoding is not supported', filePath, 'encoding');
+      throw new FileSystemError(
+        'File encoding is not supported',
+        filePath,
+        'encoding'
+      );
     }
 
     // Calculate lines read based on content if not explicitly provided
@@ -173,7 +215,7 @@ export async function generateReadDiff(
     const result: ReadDiff = {
       tool: 'Read',
       content: actualContent,
-      linesRead: calculatedLinesRead
+      linesRead: calculatedLinesRead,
     };
 
     // Add optional range information if available
@@ -188,9 +230,11 @@ export async function generateReadDiff(
     return result;
   } catch (error) {
     // Re-throw known error types
-    if (error instanceof ValidationError ||
-        error instanceof FileSystemError ||
-        error instanceof ToolError) {
+    if (
+      error instanceof ValidationError ||
+      error instanceof FileSystemError ||
+      error instanceof ToolError
+    ) {
       throw error;
     }
 
@@ -200,6 +244,10 @@ export async function generateReadDiff(
     }
 
     // Fallback for unknown errors
-    throw new ToolError(`Failed to generate read diff: ${error}`, 'Read', filePath);
+    throw new ToolError(
+      `Failed to generate read diff: ${error}`,
+      'Read',
+      filePath
+    );
   }
 }

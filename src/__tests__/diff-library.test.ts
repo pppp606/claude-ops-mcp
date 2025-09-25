@@ -61,7 +61,9 @@ describe('Diff Library Integration', () => {
       );
 
       // For identical content, diff may include headers but no actual changes
-      expect(diff).toMatch(/^===================================================================$/m);
+      expect(diff).toMatch(
+        /^===================================================================$/m
+      );
       expect(diff).toMatch(/^--- file1\.txt/m);
       expect(diff).toMatch(/^\+\+\+ file2\.txt/m);
       // Should not contain any +/- lines for actual changes
@@ -77,8 +79,9 @@ describe('Diff Library Integration', () => {
       expect(changes.length).toBeGreaterThan(0);
 
       // Find the unchanged parts (Line 1 should remain)
-      const unchangedPart = changes.find(change =>
-        change.value.includes('Line 1') && !change.added && !change.removed
+      const unchangedPart = changes.find(
+        change =>
+          change.value.includes('Line 1') && !change.added && !change.removed
       );
       expect(unchangedPart).toBeDefined();
 
@@ -95,7 +98,8 @@ describe('Diff Library Integration', () => {
   describe('Unified Diff Format Compliance', () => {
     test('should generate standard unified diff format', () => {
       const oldContent = 'function hello() {\n  console.log("old");\n}';
-      const newContent = 'function hello() {\n  console.log("new");\n  return true;\n}';
+      const newContent =
+        'function hello() {\n  console.log("new");\n  return true;\n}';
 
       const patch = createTwoFilesPatch(
         'hello.js',
@@ -121,7 +125,7 @@ describe('Diff Library Integration', () => {
         '  const a = 1;',
         '  const b = 2;',
         '  return a + b;',
-        '}'
+        '}',
       ].join('\n');
 
       const newCode = [
@@ -129,15 +133,10 @@ describe('Diff Library Integration', () => {
         '  const a = 1;',
         '  const c = 3;',
         '  return a + c;',
-        '}'
+        '}',
       ].join('\n');
 
-      const patch = createTwoFilesPatch(
-        'test.js',
-        'test.js',
-        oldCode,
-        newCode
-      );
+      const patch = createTwoFilesPatch('test.js', 'test.js', oldCode, newCode);
 
       // Should include context lines
       expect(patch).toContain(' function test() {');

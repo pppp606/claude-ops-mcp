@@ -47,13 +47,18 @@ export function getWorkspaceRoot(): string {
  * @returns The resolved absolute path if valid
  * @throws Error if path is outside workspace or invalid
  */
-export function validateWorkspacePath(filePath: string, workspaceRoot?: string): string {
+export function validateWorkspacePath(
+  filePath: string,
+  workspaceRoot?: string
+): string {
   const wsRoot = workspaceRoot || getWorkspaceRoot();
   const resolvedPath = path.resolve(wsRoot, filePath);
 
   // Ensure the resolved path is within the workspace
   if (!resolvedPath.startsWith(wsRoot + path.sep) && resolvedPath !== wsRoot) {
-    throw new Error(`Path '${filePath}' is outside the workspace root '${wsRoot}'`);
+    throw new Error(
+      `Path '${filePath}' is outside the workspace root '${wsRoot}'`
+    );
   }
 
   return resolvedPath;
@@ -65,7 +70,10 @@ export function validateWorkspacePath(filePath: string, workspaceRoot?: string):
  * @param workspaceRoot - Optional workspace root (uses auto-detected if not provided)
  * @returns True if path is within workspace, false otherwise
  */
-export function isWithinWorkspace(filePath: string, workspaceRoot?: string): boolean {
+export function isWithinWorkspace(
+  filePath: string,
+  workspaceRoot?: string
+): boolean {
   try {
     validateWorkspacePath(filePath, workspaceRoot);
     return true;
@@ -80,7 +88,10 @@ export function isWithinWorkspace(filePath: string, workspaceRoot?: string): boo
  * @param workspaceRoot - Optional workspace root (uses auto-detected if not provided)
  * @returns Relative path from workspace root
  */
-export function getRelativeWorkspacePath(filePath: string, workspaceRoot?: string): string {
+export function getRelativeWorkspacePath(
+  filePath: string,
+  workspaceRoot?: string
+): string {
   const wsRoot = workspaceRoot || getWorkspaceRoot();
   const resolvedPath = path.resolve(wsRoot, filePath);
   return path.relative(wsRoot, resolvedPath);

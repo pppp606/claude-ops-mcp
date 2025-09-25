@@ -12,7 +12,7 @@ import {
   ToolError,
   InputValidator,
   ResourceValidator,
-  SecurityValidator
+  SecurityValidator,
 } from '../error-handling';
 import { createTwoFilesPatch } from 'diff';
 
@@ -45,7 +45,11 @@ export async function generateBashDiff(
   try {
     // Enhanced input validation with specific error handling for null/undefined
     if (command === null || command === undefined) {
-      throw new ValidationError('Command cannot be null or undefined', 'command', command);
+      throw new ValidationError(
+        'Command cannot be null or undefined',
+        'command',
+        command
+      );
     }
 
     if (command === '') {
@@ -54,7 +58,11 @@ export async function generateBashDiff(
 
     // Handle dangerous command injection patterns
     if (command.includes('rm -rf / && echo test')) {
-      throw new SecurityError('Command contains potentially dangerous operations', 'command_injection', command);
+      throw new SecurityError(
+        'Command contains potentially dangerous operations',
+        'command_injection',
+        command
+      );
     }
 
     InputValidator.validateString(command, 'command');
@@ -64,8 +72,15 @@ export async function generateBashDiff(
     // Content size validation
     ResourceValidator.validateContentSize(stdout);
     ResourceValidator.validateContentSize(stderr);
-    InputValidator.validateNumber(exitCode, 'exitCode', { min: 0, max: 255, integer: true });
-    const validatedChanges = InputValidator.validateArray(fileSystemChanges, 'fileSystemChanges');
+    InputValidator.validateNumber(exitCode, 'exitCode', {
+      min: 0,
+      max: 255,
+      integer: true,
+    });
+    const validatedChanges = InputValidator.validateArray(
+      fileSystemChanges,
+      'fileSystemChanges'
+    );
 
     // Command security validation
     SecurityValidator.validateBashCommand(command);
@@ -80,7 +95,11 @@ export async function generateBashDiff(
     }
 
     if (command === '/etc/shadow' && exitCode === 1) {
-      throw new SecurityError('Permission denied for command execution', 'permission_denied', command);
+      throw new SecurityError(
+        'Permission denied for command execution',
+        'permission_denied',
+        command
+      );
     }
 
     if (command.includes('echo "unclosed quote') && exitCode === 2) {
@@ -95,15 +114,25 @@ export async function generateBashDiff(
     for (const change of validatedChanges) {
       const changeObj = change as any;
       if (!changeObj || typeof changeObj !== 'object') {
-        throw new ValidationError('Invalid file system change object', 'fileSystemChanges', changeObj);
+        throw new ValidationError(
+          'Invalid file system change object',
+          'fileSystemChanges',
+          changeObj
+        );
       }
 
       // Validate file path
       InputValidator.validateFilePath(changeObj.filePath, 'filePath');
 
       // Validate change type
-      if (!Object.values(ChangeType).includes(changeObj.changeType as ChangeType)) {
-        throw new ValidationError('Invalid ChangeType value', 'changeType', changeObj.changeType);
+      if (
+        !Object.values(ChangeType).includes(changeObj.changeType as ChangeType)
+      ) {
+        throw new ValidationError(
+          'Invalid ChangeType value',
+          'changeType',
+          changeObj.changeType
+        );
       }
     }
 
@@ -115,14 +144,15 @@ export async function generateBashDiff(
         unifiedDiff?: UnifiedDiff;
       } = {
         filePath: change.filePath,
-        changeType: change.changeType
+        changeType: change.changeType,
       };
 
       // Generate unified diff for update operations that have both before and after content
-      if (change.changeType === ChangeType.UPDATE &&
-          change.beforeContent !== undefined &&
-          change.afterContent !== undefined) {
-
+      if (
+        change.changeType === ChangeType.UPDATE &&
+        change.beforeContent !== undefined &&
+        change.afterContent !== undefined
+      ) {
         const diffText = createTwoFilesPatch(
           change.filePath,
           change.filePath,
@@ -136,7 +166,7 @@ export async function generateBashDiff(
           filename: change.filePath,
           oldVersion: change.beforeContent,
           newVersion: change.afterContent,
-          diffText
+          diffText,
         };
       }
 
@@ -152,13 +182,15 @@ export async function generateBashDiff(
       stdout,
       stderr,
       exitCode,
-      affectedFiles
+      affectedFiles,
     };
   } catch (error) {
     // Re-throw known error types
-    if (error instanceof ValidationError ||
-        error instanceof ToolError ||
-        error instanceof SecurityError) {
+    if (
+      error instanceof ValidationError ||
+      error instanceof ToolError ||
+      error instanceof SecurityError
+    ) {
       throw error;
     }
 
@@ -168,6 +200,10 @@ export async function generateBashDiff(
     }
 
     // Fallback for unknown errors
-    throw new ToolError(`Failed to generate bash diff: ${error}`, 'Bash', command);
+    throw new ToolError(
+      `Failed to generate bash diff: ${error}`,
+      'Bash',
+      command
+    );
   }
 }

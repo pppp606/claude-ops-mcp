@@ -30,7 +30,7 @@ describe('MCPServer', () => {
     it('should be initialized with proper server info', async () => {
       const server = new MCPServer();
       const serverInfo = await server.getServerInfo();
-      
+
       expect(serverInfo).toEqual({
         name: 'claude-ops-mcp',
         version: '0.1.0',
@@ -48,7 +48,7 @@ describe('MCPServer', () => {
     it('should return the correct server capabilities', async () => {
       const server = new MCPServer();
       const capabilities = await server.getCapabilities();
-      
+
       expect(capabilities).toHaveProperty('tools');
       expect(capabilities).toHaveProperty('resources');
       expect(capabilities).toHaveProperty('prompts');
