@@ -127,19 +127,19 @@ describe('Operation Diff Error Handling', () => {
       });
 
       it('should throw error for null original content', async () => {
-        await expect(generateEditDiff('/Users/yuki.t/Dev/claude-ops-mcp/src/error-handling.ts', null as any, 'old', 'new'))
+        await expect(generateEditDiff('src/error-handling.ts', null as any, 'old', 'new'))
           .rejects
           .toThrow('Original content cannot be null or undefined');
       });
 
       it('should throw error for undefined original content', async () => {
-        await expect(generateEditDiff('/Users/yuki.t/Dev/claude-ops-mcp/src/error-handling.ts', undefined as any, 'old', 'new'))
+        await expect(generateEditDiff('src/error-handling.ts', undefined as any, 'old', 'new'))
           .rejects
           .toThrow('Original content cannot be null or undefined');
       });
 
       it('should throw error for non-string parameters', async () => {
-        await expect(generateEditDiff('/Users/yuki.t/Dev/claude-ops-mcp/src/error-handling.ts', 'content', 123 as any, 'new'))
+        await expect(generateEditDiff('src/error-handling.ts', 'content', 123 as any, 'new'))
           .rejects
           .toThrow('oldString must be a string');
       });
@@ -173,7 +173,7 @@ describe('Operation Diff Error Handling', () => {
       });
 
       it('should throw error for non-string new content', async () => {
-        await expect(generateWriteDiff('/Users/yuki.t/Dev/claude-ops-mcp/src/error-handling.ts', undefined, 123 as any))
+        await expect(generateWriteDiff('src/error-handling.ts', undefined, 123 as any))
           .rejects
           .toThrow('New content must be a string');
       });
@@ -181,13 +181,13 @@ describe('Operation Diff Error Handling', () => {
 
     describe('generateMultiEditDiff - Input Validation', () => {
       it('should throw error for null edits array', async () => {
-        await expect(generateMultiEditDiff('/Users/yuki.t/Dev/claude-ops-mcp/src/error-handling.ts', 'content', null as any))
+        await expect(generateMultiEditDiff('src/error-handling.ts', 'content', null as any))
           .rejects
           .toThrow('Edits must be an array');
       });
 
       it('should throw error for non-array edits parameter', async () => {
-        await expect(generateMultiEditDiff('/Users/yuki.t/Dev/claude-ops-mcp/src/error-handling.ts', 'content', 'not-array' as any))
+        await expect(generateMultiEditDiff('src/error-handling.ts', 'content', 'not-array' as any))
           .rejects
           .toThrow('Edits must be an array');
       });
