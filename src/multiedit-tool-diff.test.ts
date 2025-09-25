@@ -248,7 +248,7 @@ line4`;
         }
       ];
 
-      const result = await generateMultiEditDiff('/test.txt', originalContent, edits);
+      const result = await generateMultiEditDiff('test.txt', originalContent, edits);
 
       // Should have proper unified diff format
       const diffText = result.unifiedDiff.diffText;
@@ -288,7 +288,7 @@ line4`;
       }));
 
       const startTime = Date.now();
-      const result = await generateMultiEditDiff('/large-test.txt', originalContent, edits);
+      const result = await generateMultiEditDiff('large-test.txt', originalContent, edits);
       const endTime = Date.now();
 
       // Performance check - should complete within reasonable time (< 1 second)
@@ -348,7 +348,7 @@ line4`;
         }
       ];
 
-      await expect(generateMultiEditDiff('/test.js', originalContent, edits))
+      await expect(generateMultiEditDiff('test.js', originalContent, edits))
         .rejects
         .toThrow(/old string not found/i);
     });
@@ -382,7 +382,7 @@ line4`;
         }
       ];
 
-      const result = await generateMultiEditDiff('/empty.js', originalContent, edits);
+      const result = await generateMultiEditDiff('empty.js', originalContent, edits);
 
       expect(result.unifiedDiff.oldVersion).toBe('');
       expect(result.unifiedDiff.newVersion).toBe('new content');
@@ -401,7 +401,7 @@ line4`;
       ];
 
       const startTime = Date.now();
-      const result = await generateMultiEditDiff('/large.js', largeContent, edits);
+      const result = await generateMultiEditDiff('large.js', largeContent, edits);
       const endTime = Date.now();
 
       // Should handle large content efficiently
@@ -524,11 +524,11 @@ line4`;
         .rejects
         .toThrow();
 
-      await expect(generateMultiEditDiff('/test.js', null as any, edits))
+      await expect(generateMultiEditDiff('test.js', null as any, edits))
         .rejects
         .toThrow();
 
-      await expect(generateMultiEditDiff('/test.js', 'content', null as any))
+      await expect(generateMultiEditDiff('test.js', 'content', null as any))
         .rejects
         .toThrow();
     });
@@ -540,7 +540,7 @@ line4`;
         { replaceAll: true } // Missing oldString and newString
       ] as any;
 
-      await expect(generateMultiEditDiff('/test.js', 'content', malformedEdits))
+      await expect(generateMultiEditDiff('test.js', 'content', malformedEdits))
         .rejects
         .toThrow(/invalid edit/i);
     });
@@ -561,7 +561,7 @@ line4`;
         }
       ];
 
-      await expect(generateMultiEditDiff('/test.js', originalContent, edits))
+      await expect(generateMultiEditDiff('test.js', originalContent, edits))
         .rejects
         .toThrow(/edit 2.*nonexistent.*not found/i);
     });

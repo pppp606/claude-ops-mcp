@@ -459,8 +459,8 @@ describe('Bash Tool Diff Generation', () => {
       const unifiedDiff = affectedFile!.unifiedDiff!;
 
       // Check unified diff format compliance
-      expect(unifiedDiff.diffText).toMatch(/^--- \/src\/Button\.tsx/m);
-      expect(unifiedDiff.diffText).toMatch(/^\+\+\+ \/src\/Button\.tsx/m);
+      expect(unifiedDiff.diffText).toMatch(/^--- src\/Button\.tsx/m);
+      expect(unifiedDiff.diffText).toMatch(/^\+\+\+ src\/Button\.tsx/m);
       expect(unifiedDiff.diffText).toMatch(/^@@ -\d+,\d+ \+\d+,\d+ @@/m);
       expect(unifiedDiff.diffText).toContain('-    return <button>Click me</button>;');
       expect(unifiedDiff.diffText).toContain('+    return <button className="btn">Click me</button>;');
@@ -741,7 +741,7 @@ describe('Bash Tool Diff Generation', () => {
       // Verify each deleted file is tracked for potential rollback
       result.affectedFiles.forEach((file: any) => {
         expect(file.changeType).toBe('delete');
-        expect(file.filePath).toMatch(/\/important\/files\//);
+        expect(file.filePath).toMatch(/important\/files\//);
         // For delete operations, we don't store unified diff but track the operation
         expect(file.unifiedDiff).toBeUndefined();
       });

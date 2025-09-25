@@ -99,13 +99,13 @@ describe('OperationFilter', () => {
     it('should filter by exact file path', () => {
       const result = filterOperations(mockOperations, { filePath: 'src/components/Button.tsx' });
       expect(result).toHaveLength(2);
-      expect(result.every(op => op.filePath === '/src/components/Button.tsx')).toBe(true);
+      expect(result.every(op => op.filePath === 'src/components/Button.tsx')).toBe(true);
     });
 
     it('should filter by partial path match', () => {
       const result = filterOperations(mockOperations, { filePath: 'src/components/' });
       expect(result).toHaveLength(3);
-      expect(result.every(op => op.filePath?.includes('/src/components/'))).toBe(true);
+      expect(result.every(op => op.filePath?.includes('src/components/'))).toBe(true);
     });
 
     it('should handle operations without filePath', () => {
@@ -212,7 +212,7 @@ describe('OperationFilter', () => {
         limit: 10
       });
       expect(result).toHaveLength(3);
-      expect(result.every(op => op.filePath?.includes('/src/'))).toBe(true);
+      expect(result.every(op => op.filePath?.includes('src/'))).toBe(true);
     });
 
     it('should maintain original ordering after filtering', () => {

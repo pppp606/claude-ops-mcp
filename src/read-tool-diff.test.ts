@@ -266,7 +266,7 @@ describe('Read Tool Diff Generation', () => {
 
     it('should throw error for undefined content', async () => {
       await expect(
-        generateReadDiff('/src/test.txt', undefined as any)
+        generateReadDiff('src/test.txt', undefined as any)
       ).rejects.toThrow('Content cannot be undefined');
     });
 
@@ -312,12 +312,12 @@ describe('Read Tool Diff Generation', () => {
 
     it('should work with different file types and extensions', async () => {
       const testCases = [
-        { path: '/src/component.tsx', content: '<div>JSX content</div>' },
-        { path: '/src/styles.css', content: '.class { color: red; }' },
-        { path: '/README.md', content: '# Project Title\n\nDescription here.' },
-        { path: '/package.json', content: '{"name": "test"}' },
-        { path: '/src/script.sh', content: '#!/bin/bash\necho "hello"' },
-        { path: '/config.yaml', content: 'key: value\narray:\n  - item1' }
+        { path: 'src/component.tsx', content: '<div>JSX content</div>' },
+        { path: 'src/styles.css', content: '.class { color: red; }' },
+        { path: 'README.md', content: '# Project Title\n\nDescription here.' },
+        { path: 'package.json', content: '{"name": "test"}' },
+        { path: 'src/script.sh', content: '#!/bin/bash\necho "hello"' },
+        { path: 'config.yaml', content: 'key: value\narray:\n  - item1' }
       ];
 
       for (const testCase of testCases) {

@@ -175,8 +175,8 @@ describe('Edit Tool Diff Generation', () => {
       const diffText = result.unifiedDiff.diffText;
 
       // Check unified diff format compliance
-      expect(diffText).toMatch(/^--- \/src\/components\/Header\.vue/m);
-      expect(diffText).toMatch(/^\+\+\+ \/src\/components\/Header\.vue/m);
+      expect(diffText).toMatch(/^--- src\/components\/Header\.vue/m);
+      expect(diffText).toMatch(/^\+\+\+ src\/components\/Header\.vue/m);
       expect(diffText).toMatch(/^@@ -\d+,\d+ \+\d+,\d+ @@/m);
     });
 
