@@ -59,7 +59,11 @@ export class LogParseError extends Error {
 export class LogParser {
   // Cache tool categorizations for performance
   private static readonly FILE_OPERATION_TOOLS = new Set([
-    'Edit', 'Write', 'Read', 'MultiEdit', 'Delete'
+    'Edit',
+    'Write',
+    'Read',
+    'MultiEdit',
+    'Delete',
   ]);
 
   private static readonly FILE_PATH_KEYS = ['file_path', 'filepath', 'path'];
@@ -82,7 +86,10 @@ export class LogParser {
    * @returns OperationIndex object
    * @throws LogParseError for malformed JSON or missing required fields
    */
-  static parseLogEntry(logEntry: string, options: ParseOptions = {}): OperationIndex {
+  static parseLogEntry(
+    logEntry: string,
+    options: ParseOptions = {}
+  ): OperationIndex {
     let rawEntry: RawLogEntry;
 
     // Parse JSON with better error handling
@@ -106,20 +113,32 @@ export class LogParser {
     if (!rawEntry.parameters) {
       throw new LogParseError('Missing required field: parameters');
     }
-    if (typeof rawEntry.parameters !== 'object' || Array.isArray(rawEntry.parameters)) {
+    if (
+      typeof rawEntry.parameters !== 'object' ||
+      Array.isArray(rawEntry.parameters)
+    ) {
       throw new LogParseError('Invalid parameters type');
     }
 
     // Validate timestamp format if requested
-    if (options.validateTimestamp && !this.isValidTimestamp(rawEntry.timestamp)) {
-      throw new LogParseError(`Invalid timestamp format: ${rawEntry.timestamp}`);
+    if (
+      options.validateTimestamp &&
+      !this.isValidTimestamp(rawEntry.timestamp)
+    ) {
+      throw new LogParseError(
+        `Invalid timestamp format: ${rawEntry.timestamp}`
+      );
     }
 
     // Extract file path from parameters if available
     const filePath = this.extractFilePath(rawEntry.parameters, rawEntry.tool);
 
     // Generate operation summary
-    const summary = this.generateSummary(rawEntry.tool, rawEntry.parameters, filePath);
+    const summary = this.generateSummary(
+      rawEntry.tool,
+      rawEntry.parameters,
+      filePath
+    );
 
     // Determine change type based on tool
     const changeType = this.determineChangeType(rawEntry.tool);
@@ -129,7 +148,7 @@ export class LogParser {
       timestamp: rawEntry.timestamp,
       tool: rawEntry.tool,
       summary,
-      changeType
+      changeType,
     };
 
     if (filePath) {
@@ -145,7 +164,10 @@ export class LogParser {
    * @param options - Parsing options
    * @returns Array of OperationIndex objects (for backward compatibility)
    */
-  static parseLogStream(jsonlContent: string, options: ParseOptions = {}): OperationIndex[] {
+  static parseLogStream(
+    jsonlContent: string,
+    options: ParseOptions = {}
+  ): OperationIndex[] {
     const result = this.parseLogStreamWithMetadata(jsonlContent, options);
     return result.operations;
   }
@@ -156,19 +178,22 @@ export class LogParser {
    * @param options - Parsing options
    * @returns ParseResult with operations and metadata
    */
-  static parseLogStreamWithMetadata(jsonlContent: string, options: ParseOptions = {}): ParseResult {
+  static parseLogStreamWithMetadata(
+    jsonlContent: string,
+    options: ParseOptions = {}
+  ): ParseResult {
     if (!jsonlContent || jsonlContent.trim() === '') {
       return {
         operations: [],
         skippedCount: 0,
-        totalProcessed: 0
+        totalProcessed: 0,
       };
     }
 
     const {
       skipMalformed = true,
       maxEntries = 0,
-      validateTimestamp = false
+      validateTimestamp = false,
     } = options;
 
     const operations: OperationIndex[] = [];
@@ -193,7 +218,9 @@ export class LogParser {
       }
 
       try {
-        const operation = this.parseLogEntry(trimmedLine, { validateTimestamp });
+        const operation = this.parseLogEntry(trimmedLine, {
+          validateTimestamp,
+        });
         operations.push(operation);
       } catch (error) {
         if (skipMalformed) {
@@ -221,7 +248,7 @@ export class LogParser {
     return {
       operations,
       skippedCount,
-      totalProcessed: processedCount
+      totalProcessed: processedCount,
     };
   }
 
@@ -248,7 +275,10 @@ export class LogParser {
    * @param tool - Tool name for context
    * @returns File path if found, undefined otherwise
    */
-  private static extractFilePath(parameters: Record<string, unknown>, tool: string): string | undefined {
+  private static extractFilePath(
+    parameters: Record<string, unknown>,
+    tool: string
+  ): string | undefined {
     // Use cached Set for faster lookups
     if (!this.FILE_OPERATION_TOOLS.has(tool)) {
       return undefined;
@@ -318,7 +348,10 @@ export class LogParser {
    * @param changeType - Change type to filter by
    * @returns Filtered array of operations
    */
-  static filterByChangeType(operations: OperationIndex[], changeType: ChangeType): OperationIndex[] {
+  static filterByChangeType(
+    operations: OperationIndex[],
+    changeType: ChangeType
+  ): OperationIndex[] {
     return operations.filter(op => op.changeType === changeType);
   }
 
@@ -327,7 +360,9 @@ export class LogParser {
    * @param operations - Array of operations to group
    * @returns Map of file paths to operations
    */
-  static groupByFilePath(operations: OperationIndex[]): Map<string, OperationIndex[]> {
+  static groupByFilePath(
+    operations: OperationIndex[]
+  ): Map<string, OperationIndex[]> {
     const groups = new Map<string, OperationIndex[]>();
 
     for (const operation of operations) {

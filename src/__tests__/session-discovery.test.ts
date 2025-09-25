@@ -25,14 +25,14 @@ describe('SessionDiscovery', () => {
       close: jest.fn(),
       [Symbol.asyncIterator]: async function* () {
         // This will be customized per test
-      }
+      },
     };
 
     (readline.createInterface as jest.Mock).mockReturnValue(mockRl);
 
     // Mock createReadStream
     const mockStream = {
-      close: jest.fn()
+      close: jest.fn(),
     };
 
     (fsSync.createReadStream as jest.Mock).mockReturnValue(mockStream);
@@ -45,9 +45,21 @@ describe('SessionDiscovery', () => {
       const sessionFile = `${mockSessionId}.jsonl`;
       const sessionFilePath = path.join(projectPath, sessionFile);
 
-      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
-      const mockSessionDirent = { name: sessionFile, isDirectory: (): boolean => false, isFile: (): boolean => true };
-      const mockOtherSessionDirent = { name: 'other-session.jsonl', isDirectory: (): boolean => false, isFile: (): boolean => true };
+      const mockProjectDirent = {
+        name: mockProjectHash,
+        isDirectory: (): boolean => true,
+        isFile: (): boolean => false,
+      };
+      const mockSessionDirent = {
+        name: sessionFile,
+        isDirectory: (): boolean => false,
+        isFile: (): boolean => true,
+      };
+      const mockOtherSessionDirent = {
+        name: 'other-session.jsonl',
+        isDirectory: (): boolean => false,
+        isFile: (): boolean => true,
+      };
 
       (fs.readdir as jest.Mock)
         .mockResolvedValueOnce([mockProjectDirent]) // List of project directories
@@ -66,7 +78,7 @@ describe('SessionDiscovery', () => {
           for (const line of mockLogLines) {
             yield line;
           }
-        }
+        },
       };
 
       (readline.createInterface as jest.Mock).mockReturnValue(mockRl);
@@ -84,9 +96,21 @@ describe('SessionDiscovery', () => {
     it('should return null if UID is not found in any session', async () => {
       const _claudeProjectsPath = path.join(mockHomedir, '.claude', 'projects');
 
-      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
-      const mockSession1Dirent = { name: 'session1.jsonl', isDirectory: (): boolean => false, isFile: (): boolean => true };
-      const mockSession2Dirent = { name: 'session2.jsonl', isDirectory: (): boolean => false, isFile: (): boolean => true };
+      const mockProjectDirent = {
+        name: mockProjectHash,
+        isDirectory: (): boolean => true,
+        isFile: (): boolean => false,
+      };
+      const mockSession1Dirent = {
+        name: 'session1.jsonl',
+        isDirectory: (): boolean => false,
+        isFile: (): boolean => true,
+      };
+      const mockSession2Dirent = {
+        name: 'session2.jsonl',
+        isDirectory: (): boolean => false,
+        isFile: (): boolean => true,
+      };
 
       (fs.readdir as jest.Mock)
         .mockResolvedValueOnce([mockProjectDirent])
@@ -97,7 +121,7 @@ describe('SessionDiscovery', () => {
         close: jest.fn(),
         [Symbol.asyncIterator]: async function* () {
           yield '{"type": "other", "data": {}}';
-        }
+        },
       };
 
       (readline.createInterface as jest.Mock).mockReturnValue(mockRl);
@@ -109,7 +133,9 @@ describe('SessionDiscovery', () => {
     });
 
     it('should handle missing .claude directory gracefully', async () => {
-      (fs.readdir as jest.Mock).mockRejectedValue(new Error('ENOENT: no such file or directory'));
+      (fs.readdir as jest.Mock).mockRejectedValue(
+        new Error('ENOENT: no such file or directory')
+      );
 
       const discovery = new SessionDiscovery();
       const result = await discovery.findSessionByUID(mockUID);
@@ -123,8 +149,16 @@ describe('SessionDiscovery', () => {
       const sessionFile = `${mockSessionId}.jsonl`;
       const sessionFilePath = path.join(projectPath, sessionFile);
 
-      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
-      const mockSessionDirent = { name: sessionFile, isDirectory: (): boolean => false, isFile: (): boolean => true };
+      const mockProjectDirent = {
+        name: mockProjectHash,
+        isDirectory: (): boolean => true,
+        isFile: (): boolean => false,
+      };
+      const mockSessionDirent = {
+        name: sessionFile,
+        isDirectory: (): boolean => false,
+        isFile: (): boolean => true,
+      };
 
       (fs.readdir as jest.Mock)
         .mockResolvedValueOnce([mockProjectDirent])
@@ -143,7 +177,7 @@ describe('SessionDiscovery', () => {
           for (const line of mockLogLines) {
             yield line;
           }
-        }
+        },
       };
 
       (readline.createInterface as jest.Mock).mockReturnValue(mockRl);
@@ -173,7 +207,9 @@ describe('SessionDiscovery', () => {
       const discovery = new SessionDiscovery();
 
       expect(discovery.parseSessionId('session-123.jsonl')).toBe('session-123');
-      expect(discovery.parseSessionId('complex-session-id-456.jsonl')).toBe('complex-session-id-456');
+      expect(discovery.parseSessionId('complex-session-id-456.jsonl')).toBe(
+        'complex-session-id-456'
+      );
       expect(discovery.parseSessionId('invalid-file.txt')).toBeNull();
     });
   });
@@ -186,14 +222,24 @@ describe('SessionDiscovery', () => {
       const sessionFilePath = path.join(projectPath, sessionFile);
 
       // Mock directory entries with file type information
-      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
-      const mockFileDirent = { name: sessionFile, isDirectory: (): boolean => false, isFile: (): boolean => true };
+      const mockProjectDirent = {
+        name: mockProjectHash,
+        isDirectory: (): boolean => true,
+        isFile: (): boolean => false,
+      };
+      const mockFileDirent = {
+        name: sessionFile,
+        isDirectory: (): boolean => false,
+        isFile: (): boolean => true,
+      };
 
       (fs.readdir as jest.Mock)
         .mockResolvedValueOnce([mockProjectDirent])
         .mockResolvedValueOnce([mockFileDirent]);
 
-      const mockLogLines = [`{"timestamp": 1234567891, "type": "server_response", "data": {"metadata": {"uid": "${mockUID}"}}}`];
+      const mockLogLines = [
+        `{"timestamp": 1234567891, "type": "server_response", "data": {"metadata": {"uid": "${mockUID}"}}}`,
+      ];
 
       // Mock the readline interface for this specific test
       const mockRl = {
@@ -202,7 +248,7 @@ describe('SessionDiscovery', () => {
           for (const line of mockLogLines) {
             yield line;
           }
-        }
+        },
       };
 
       (readline.createInterface as jest.Mock).mockReturnValue(mockRl);
@@ -243,8 +289,16 @@ describe('SessionDiscovery', () => {
       const _projectPath = path.join(_claudeProjectsPath, mockProjectHash);
       const sessionFile = `${mockSessionId}.jsonl`;
 
-      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
-      const mockSessionDirent = { name: sessionFile, isDirectory: (): boolean => false, isFile: (): boolean => true };
+      const mockProjectDirent = {
+        name: mockProjectHash,
+        isDirectory: (): boolean => true,
+        isFile: (): boolean => false,
+      };
+      const mockSessionDirent = {
+        name: sessionFile,
+        isDirectory: (): boolean => false,
+        isFile: (): boolean => true,
+      };
 
       (fs.readdir as jest.Mock)
         .mockResolvedValueOnce([mockProjectDirent])
@@ -252,7 +306,9 @@ describe('SessionDiscovery', () => {
         .mockResolvedValueOnce([mockProjectDirent])
         .mockResolvedValueOnce([mockSessionDirent]);
 
-      const mockLogLines = [`{"timestamp": 1234567891, "type": "server_response", "data": {"metadata": {"uid": "${mockUID}"}}}`];
+      const mockLogLines = [
+        `{"timestamp": 1234567891, "type": "server_response", "data": {"metadata": {"uid": "${mockUID}"}}}`,
+      ];
 
       // Mock the readline interface for this specific test
       const mockRl = {
@@ -261,7 +317,7 @@ describe('SessionDiscovery', () => {
           for (const line of mockLogLines) {
             yield line;
           }
-        }
+        },
       };
 
       (readline.createInterface as jest.Mock).mockReturnValue(mockRl);
@@ -284,10 +340,21 @@ describe('SessionDiscovery', () => {
 
   describe('file type filtering', () => {
     it('should skip non-directory entries in projects folder', async () => {
-      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
-      const mockFileDirent = { name: 'some-file.txt', isDirectory: (): boolean => false, isFile: (): boolean => true };
+      const mockProjectDirent = {
+        name: mockProjectHash,
+        isDirectory: (): boolean => true,
+        isFile: (): boolean => false,
+      };
+      const mockFileDirent = {
+        name: 'some-file.txt',
+        isDirectory: (): boolean => false,
+        isFile: (): boolean => true,
+      };
 
-      (fs.readdir as jest.Mock).mockResolvedValueOnce([mockProjectDirent, mockFileDirent]);
+      (fs.readdir as jest.Mock).mockResolvedValueOnce([
+        mockProjectDirent,
+        mockFileDirent,
+      ]);
 
       const discovery = new SessionDiscovery();
       const result = await discovery.findSessionByUID(mockUID);
@@ -298,15 +365,29 @@ describe('SessionDiscovery', () => {
     });
 
     it('should skip non-file entries in project directories', async () => {
-      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
-      const mockSubDirDirent = { name: 'subdirectory', isDirectory: (): boolean => true, isFile: (): boolean => false };
-      const mockFileDirent = { name: 'session.jsonl', isDirectory: (): boolean => false, isFile: (): boolean => true };
+      const mockProjectDirent = {
+        name: mockProjectHash,
+        isDirectory: (): boolean => true,
+        isFile: (): boolean => false,
+      };
+      const mockSubDirDirent = {
+        name: 'subdirectory',
+        isDirectory: (): boolean => true,
+        isFile: (): boolean => false,
+      };
+      const mockFileDirent = {
+        name: 'session.jsonl',
+        isDirectory: (): boolean => false,
+        isFile: (): boolean => true,
+      };
 
       (fs.readdir as jest.Mock)
         .mockResolvedValueOnce([mockProjectDirent])
         .mockResolvedValueOnce([mockSubDirDirent, mockFileDirent]);
 
-      const mockLogLines = [`{"timestamp": 1234567891, "type": "server_response", "data": {"metadata": {"uid": "${mockUID}"}}}`];
+      const mockLogLines = [
+        `{"timestamp": 1234567891, "type": "server_response", "data": {"metadata": {"uid": "${mockUID}"}}}`,
+      ];
 
       // Mock the readline interface for this specific test
       const mockRl = {
@@ -315,7 +396,7 @@ describe('SessionDiscovery', () => {
           for (const line of mockLogLines) {
             yield line;
           }
-        }
+        },
       };
 
       (readline.createInterface as jest.Mock).mockReturnValue(mockRl);
@@ -329,9 +410,21 @@ describe('SessionDiscovery', () => {
     });
 
     it('should skip non-jsonl files', async () => {
-      const mockProjectDirent = { name: mockProjectHash, isDirectory: (): boolean => true, isFile: (): boolean => false };
-      const mockTxtFile = { name: 'readme.txt', isDirectory: (): boolean => false, isFile: (): boolean => true };
-      const mockJsonFile = { name: 'config.json', isDirectory: (): boolean => false, isFile: (): boolean => true };
+      const mockProjectDirent = {
+        name: mockProjectHash,
+        isDirectory: (): boolean => true,
+        isFile: (): boolean => false,
+      };
+      const mockTxtFile = {
+        name: 'readme.txt',
+        isDirectory: (): boolean => false,
+        isFile: (): boolean => true,
+      };
+      const mockJsonFile = {
+        name: 'config.json',
+        isDirectory: (): boolean => false,
+        isFile: (): boolean => true,
+      };
 
       (fs.readdir as jest.Mock)
         .mockResolvedValueOnce([mockProjectDirent])

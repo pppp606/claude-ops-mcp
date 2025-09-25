@@ -17,7 +17,8 @@ describe('UIDManager', () => {
 
     it('should follow UUID v4 format', () => {
       const uid = UIDManager.generateUID();
-      const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const uuidV4Regex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       expect(uid).toMatch(uuidV4Regex);
     });
   });
