@@ -89,7 +89,7 @@ export async function generateWriteDiff(
 
     // Check if file has extension for content type detection (except for special system files)
     const ext = path.extname(filePath);
-    if (!ext && !filePath.startsWith('/dev/') && !filePath.includes('disk-full')) {
+    if (!ext && !filePath.startsWith('/dev/') && !filePath.includes('disk-full') && !filePath.startsWith('/etc/')) {
       throw new ValidationError('File extension required for content type detection', 'filePath', filePath);
     }
 

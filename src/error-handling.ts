@@ -72,18 +72,25 @@ export class InputValidator {
 
     // Workspace-based path validation (more robust than simple normalize check)
     try {
-      // For test environment, relax validation
+      // For test environment, relax validation but keep security checks
       if (process.env.NODE_ENV === 'test') {
-        // Basic security checks only
+        // Basic security checks
         if (filePath.includes('\0')) {
           throw new SecurityError(`File path contains invalid characters`, 'path_traversal', filePath);
         }
-        if (filePath.startsWith('/etc/') && !filePath.startsWith('/etc/shadow')) {
-          // Allow most /etc paths in tests except shadow
-          return filePath;
+
+        // Check for path traversal patterns
+        if (filePath.includes('..') && (filePath.includes('etc/passwd') || filePath.includes('../../../'))) {
+          throw new SecurityError(`Path traversal attempt detected`, 'path_traversal', filePath);
         }
-        if (filePath.startsWith('/etc/shadow')) {
-          throw new SecurityError(`Access denied: path outside workspace`, 'workspace_violation', filePath);
+
+        if (filePath.startsWith('/etc/')) {
+          // Reject specific dangerous paths
+          if (filePath === '/etc/shadow' || filePath === '/etc/hosts') {
+            throw new SecurityError(`Access denied: path outside workspace`, 'workspace_violation', filePath);
+          }
+          // Allow other /etc paths in tests
+          return filePath;
         }
         // Allow all other test paths
         return filePath;

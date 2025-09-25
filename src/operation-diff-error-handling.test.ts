@@ -474,7 +474,7 @@ describe('Operation Diff Error Handling', () => {
           { oldString: 'b', newString: 'c' },
           { oldString: 'c', newString: 'a' } // Creates circular dependency
         ];
-        await expect(generateMultiEditDiff('/test/file.txt', 'a', circularEdits))
+        await expect(generateMultiEditDiff('/test/circular.txt', 'a', circularEdits))
           .rejects
           .toThrow('Circular edit dependencies detected');
       });

@@ -4,7 +4,8 @@
  * Handles BashDiff generation with comprehensive command output and file system change tracking.
  */
 
-import type { BashDiff, ChangeType, UnifiedDiff } from '../types/operation-index';
+import type { BashDiff, UnifiedDiff } from '../types/operation-index';
+import { ChangeType } from '../types/operation-index';
 import {
   ValidationError,
   SecurityError,
@@ -101,7 +102,7 @@ export async function generateBashDiff(
       InputValidator.validateFilePath(changeObj.filePath, 'filePath');
 
       // Validate change type
-      if (!Object.values(['CREATE', 'UPDATE', 'DELETE', 'READ'] as const).includes(changeObj.changeType)) {
+      if (!Object.values(ChangeType).includes(changeObj.changeType as ChangeType)) {
         throw new ValidationError('Invalid ChangeType value', 'changeType', changeObj.changeType);
       }
     }
@@ -118,7 +119,7 @@ export async function generateBashDiff(
       };
 
       // Generate unified diff for update operations that have both before and after content
-      if (change.changeType === 'update' &&
+      if (change.changeType === ChangeType.UPDATE &&
           change.beforeContent !== undefined &&
           change.afterContent !== undefined) {
 
