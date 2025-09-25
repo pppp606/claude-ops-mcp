@@ -8,7 +8,7 @@ describe('OperationFilter', () => {
       id: 'op-001',
       timestamp: '2025-09-18T10:00:00.000Z',
       tool: 'Write',
-      filePath: '/src/components/Button.tsx',
+      filePath: 'src/components/Button.tsx',
       summary: 'Created button component',
       changeType: ChangeType.CREATE
     },
@@ -16,7 +16,7 @@ describe('OperationFilter', () => {
       id: 'op-002',
       timestamp: '2025-09-18T11:00:00.000Z',
       tool: 'Edit',
-      filePath: '/src/components/Button.tsx',
+      filePath: 'src/components/Button.tsx',
       summary: 'Updated button styles',
       changeType: ChangeType.UPDATE
     },
@@ -24,7 +24,7 @@ describe('OperationFilter', () => {
       id: 'op-003',
       timestamp: '2025-09-18T12:00:00.000Z',
       tool: 'Write',
-      filePath: '/src/utils/helpers.ts',
+      filePath: 'src/utils/helpers.ts',
       summary: 'Added utility functions',
       changeType: ChangeType.CREATE
     },
@@ -39,7 +39,7 @@ describe('OperationFilter', () => {
       id: 'op-005',
       timestamp: '2025-09-18T14:00:00.000Z',
       tool: 'Delete',
-      filePath: '/src/components/OldComponent.tsx',
+      filePath: 'src/components/OldComponent.tsx',
       summary: 'Removed obsolete component',
       changeType: ChangeType.DELETE
     }
@@ -97,25 +97,25 @@ describe('OperationFilter', () => {
     });
 
     it('should filter by exact file path', () => {
-      const result = filterOperations(mockOperations, { filePath: '/src/components/Button.tsx' });
+      const result = filterOperations(mockOperations, { filePath: 'src/components/Button.tsx' });
       expect(result).toHaveLength(2);
       expect(result.every(op => op.filePath === '/src/components/Button.tsx')).toBe(true);
     });
 
     it('should filter by partial path match', () => {
-      const result = filterOperations(mockOperations, { filePath: '/src/components/' });
+      const result = filterOperations(mockOperations, { filePath: 'src/components/' });
       expect(result).toHaveLength(3);
       expect(result.every(op => op.filePath?.includes('/src/components/'))).toBe(true);
     });
 
     it('should handle operations without filePath', () => {
-      const result = filterOperations(mockOperations, { filePath: '/src/' });
+      const result = filterOperations(mockOperations, { filePath: 'src/' });
       expect(result).toHaveLength(4);
       expect(result.find(op => op.id === 'op-004')).toBeUndefined();
     });
 
     it('should return empty array when no matches found', () => {
-      const result = filterOperations(mockOperations, { filePath: '/nonexistent/' });
+      const result = filterOperations(mockOperations, { filePath: 'nonexistent/' });
       expect(result).toHaveLength(0);
     });
 
@@ -195,7 +195,7 @@ describe('OperationFilter', () => {
   describe('composite filtering', () => {
     it('should apply multiple filters together', () => {
       const result = filterOperations(mockOperations, {
-        filePath: '/src/',
+        filePath: 'src/',
         since: '2025-09-18T10:30:00.000Z',
         limit: 2
       });
@@ -206,7 +206,7 @@ describe('OperationFilter', () => {
 
     it('should apply all filters in correct order', () => {
       const result = filterOperations(mockOperations, {
-        filePath: '/src/',
+        filePath: 'src/',
         since: '2025-09-18T10:00:00.000Z',
         until: '2025-09-18T13:00:00.000Z',
         limit: 10
@@ -217,7 +217,7 @@ describe('OperationFilter', () => {
 
     it('should maintain original ordering after filtering', () => {
       const result = filterOperations(mockOperations, {
-        filePath: '/src/',
+        filePath: 'src/',
         since: '2025-09-18T10:00:00.000Z',
         until: '2025-09-18T14:00:00.000Z'
       });
@@ -228,7 +228,7 @@ describe('OperationFilter', () => {
 
     it('should handle empty results gracefully', () => {
       const result = filterOperations(mockOperations, {
-        filePath: '/nonexistent/',
+        filePath: 'nonexistent/',
         since: '2026-01-01T00:00:00.000Z'
       });
       expect(result).toHaveLength(0);

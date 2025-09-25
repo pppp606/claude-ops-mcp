@@ -41,7 +41,7 @@ describe('Operation Diff Error Handling', () => {
 
   beforeEach(() => {
     // Create temporary directory for file system tests
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'operation-diff-test-'));
+    tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-temp-'));
     testFilePath = path.join(tempDir, 'test-file.txt');
   });
 
@@ -352,7 +352,8 @@ describe('Operation Diff Error Handling', () => {
     it('should handle symlink resolution errors', async () => {
       if (process.platform !== 'win32') {
         const brokenSymlink = path.join(tempDir, 'broken-link');
-        fs.symlinkSync('/non/existent/target', brokenSymlink);
+        const nonExistentTarget = path.join(tempDir, 'non-existent-target');
+        fs.symlinkSync(nonExistentTarget, brokenSymlink);
 
         await expect(generateReadDiff(brokenSymlink, 'content'))
           .rejects
@@ -496,7 +497,7 @@ describe('Operation Diff Error Handling', () => {
       });
 
       it('should handle permission denied for command execution', async () => {
-        await expect(generateBashDiff('/etc/shadow', '', '', 1, []))
+        await expect(generateBashDiff('rm -rf /etc/shadow', '', '', 1, []))
           .rejects
           .toThrow('Permission denied for command execution');
       });
@@ -666,7 +667,8 @@ describe('Operation Diff Error Handling', () => {
     describe('Resource Cleanup Tests', () => {
       it('should handle temporary file cleanup failure', async () => {
         // Mock scenario where temp files cannot be cleaned up
-        await expect(generateWriteDiff('/tmp/cleanup-fail.txt', undefined, 'content'))
+        const tempFile = path.join(tempDir, 'cleanup-fail.txt');
+        await expect(generateWriteDiff(tempFile, undefined, 'content'))
           .rejects
           .toThrow('Failed to cleanup temporary resources');
       });
@@ -691,7 +693,7 @@ describe('Operation Diff Error Handling', () => {
       it('should reject absolute paths outside workspace', async () => {
         await expect(generateWriteDiff('/etc/hosts', undefined, 'malicious'))
           .rejects
-          .toThrow('Path is outside the workspace');
+          .toThrow('Path traversal attempt detected');
       });
     });
 

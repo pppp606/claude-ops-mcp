@@ -40,7 +40,7 @@ describe('Edit Tool Diff Generation', () => {
   describe('Basic Edit Diff Generation', () => {
     it('should generate EditDiff for simple string replacement', async () => {
       const scenario = createMockFileScenario(
-        '/src/components/Button.tsx',
+        'src/components/Button.tsx',
         'const color = "blue";\nconst size = "medium";',
         'const color = "green";\nconst size = "medium";'
       );
@@ -89,7 +89,7 @@ describe('Edit Tool Diff Generation', () => {
       ].join('\n');
 
       const result = await generateEditDiff(
-        '/src/utils/calculator.js',
+        'src/utils/calculator.js',
         originalContent,
         '    total += item.price;',
         '    total += item.price * item.quantity;',
@@ -117,7 +117,7 @@ describe('Edit Tool Diff Generation', () => {
       ].join('\n');
 
       const result = await generateEditDiff(
-        '/src/config/urls.js',
+        'src/config/urls.js',
         originalContent,
         '"http://localhost"',
         '"https://api.example.com"',
@@ -145,7 +145,7 @@ describe('Edit Tool Diff Generation', () => {
       ].join('\n');
 
       const result = await generateEditDiff(
-        '/src/constants.js',
+        'src/constants.js',
         originalContent,
         '"old_value"',
         '"new_value"',
@@ -165,7 +165,7 @@ describe('Edit Tool Diff Generation', () => {
   describe('Unified Diff Format Validation', () => {
     it('should generate valid unified diff headers', async () => {
       const result = await generateEditDiff(
-        '/src/components/Header.vue',
+        'src/components/Header.vue',
         '<template>\n  <header>Old Title</header>\n</template>',
         'Old Title',
         'New Title',
@@ -195,7 +195,7 @@ describe('Edit Tool Diff Generation', () => {
       ].join('\n');
 
       const result = await generateEditDiff(
-        '/src/Calculator.js',
+        'src/Calculator.js',
         originalContent,
         '    this.value += n;',
         '    this.value = this.value + n;',
@@ -215,7 +215,7 @@ describe('Edit Tool Diff Generation', () => {
       const originalContent = 'Line 1\nLine 2\nLine 3\nLine 4\nLine 5';
 
       const result = await generateEditDiff(
-        '/test/file.txt',
+        'test/file.txt',
         originalContent,
         'Line 3',
         'Modified Line 3',
@@ -236,7 +236,7 @@ describe('Edit Tool Diff Generation', () => {
       const originalContent = 'Hello World\nExtra text';
 
       const result = await generateEditDiff(
-        '/test/empty.txt',
+        'test/empty.txt',
         originalContent,
         'Extra text',
         '',
@@ -253,7 +253,7 @@ describe('Edit Tool Diff Generation', () => {
       const originalContent = 'function test() {\n}';
 
       const result = await generateEditDiff(
-        '/test/insert.js',
+        'test/insert.js',
         originalContent,
         '',
         '  console.log("inserted");',
@@ -269,7 +269,7 @@ describe('Edit Tool Diff Generation', () => {
       const originalContent = 'const value = 42;';
 
       const result = await generateEditDiff(
-        '/test/nochange.js',
+        'test/nochange.js',
         originalContent,
         'const value = 42;',
         'const value = 42;',
@@ -288,7 +288,7 @@ describe('Edit Tool Diff Generation', () => {
 
       // This should throw an error or handle gracefully when old_string doesn't exist
       await expect(generateEditDiff(
-        '/test/notfound.js',
+        'test/notfound.js',
         originalContent,
         'nonexistent string',
         'replacement',
@@ -300,7 +300,7 @@ describe('Edit Tool Diff Generation', () => {
       const originalContent = 'line1\n\nline3\n  indented';
 
       const result = await generateEditDiff(
-        '/test/whitespace.txt',
+        'test/whitespace.txt',
         originalContent,
         '\n\n',
         '\n',
@@ -316,7 +316,7 @@ describe('Edit Tool Diff Generation', () => {
       const originalContent = 'const regex = /.*?[a-z]+$/;';
 
       const result = await generateEditDiff(
-        '/test/regex.js',
+        'test/regex.js',
         originalContent,
         '/.*?[a-z]+$/',
         '/^[A-Z]+.*?$/',
@@ -333,7 +333,7 @@ describe('Edit Tool Diff Generation', () => {
   describe('Tool-specific Integration', () => {
     it('should maintain EditDiff type consistency', async () => {
       const result = await generateEditDiff(
-        '/src/test.ts',
+        'src/test.ts',
         'const a = 1;',
         'const a = 1;',
         'const a = 2;',
@@ -366,7 +366,7 @@ describe('Edit Tool Diff Generation', () => {
 
     it('should integrate with showOperationDiff API structure', async () => {
       const result = await generateEditDiff(
-        '/src/integration.ts',
+        'src/integration.ts',
         'export const version = "1.0.0";',
         '"1.0.0"',
         '"2.0.0"',
@@ -375,14 +375,14 @@ describe('Edit Tool Diff Generation', () => {
 
       // Verify structure matches what showOperationDiff expects for EditDiff
       expect(result.tool).toBe('Edit');
-      expect(result.unifiedDiff.filename).toBe('/src/integration.ts');
+      expect(result.unifiedDiff.filename).toBe('src/integration.ts');
 
       // Should be compatible with OperationDiff.diff field
       const mockOperationDiff = {
         operationId: 'test-123',
         timestamp: '2025-09-23T14:30:45.123Z',
         tool: 'Edit',
-        filePath: '/src/integration.ts',
+        filePath: 'src/integration.ts',
         summary: 'Updated version',
         changeType: 'update',
         diff: result
@@ -394,7 +394,7 @@ describe('Edit Tool Diff Generation', () => {
 
     it('should support Claude rollback/debug use cases', async () => {
       const result = await generateEditDiff(
-        '/src/debug-example.js',
+        'src/debug-example.js',
         'function buggyFunction() {\n  return undefined;\n}',
         'return undefined;',
         'return null;',
@@ -420,7 +420,7 @@ describe('Edit Tool Diff Generation', () => {
 
       const startTime = Date.now();
       const result = await generateEditDiff(
-        '/test/large.txt',
+        'test/large.txt',
         largeContent,
         'line',
         'modified_line',
@@ -441,7 +441,7 @@ describe('Edit Tool Diff Generation', () => {
 
       // Binary content should throw an error
       await expect(generateEditDiff(
-        '/test/binary.dat',
+        'test/binary.dat',
         binaryLikeContent + 'text',
         'text',
         'newtext',

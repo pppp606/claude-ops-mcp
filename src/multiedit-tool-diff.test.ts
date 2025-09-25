@@ -126,7 +126,7 @@ export class ApiService2 {
         }
       ];
 
-      const result = await generateMultiEditDiff('/test.js', originalContent, edits);
+      const result = await generateMultiEditDiff('test.js', originalContent, edits);
 
       expect(result.edits).toHaveLength(2);
 
@@ -154,7 +154,7 @@ export class ApiService2 {
         }
       ];
 
-      const result = await generateMultiEditDiff('/test.js', originalContent, edits);
+      const result = await generateMultiEditDiff('test.js', originalContent, edits);
 
       // Final content should show the cumulative result
       expect(result.unifiedDiff.newVersion).toBe('const value = "final_value_new";');
@@ -186,7 +186,7 @@ export class ApiService2 {
         }
       ];
 
-      const result = await generateMultiEditDiff('/test.js', originalContent, edits);
+      const result = await generateMultiEditDiff('test.js', originalContent, edits);
 
       // Should provide access to intermediate states (via additionalMetadata)
       expect(result).toHaveProperty('intermediateStates');
@@ -220,7 +220,7 @@ export class ApiService2 {
         }
       ];
 
-      const result = await generateMultiEditDiff('/test.js', originalContent, edits);
+      const result = await generateMultiEditDiff('test.js', originalContent, edits);
 
       // After first edit: 'exam exam exam other exam'
       // After second edit: 'quiz exam exam other exam'
@@ -330,7 +330,7 @@ line4`;
         }
       ];
 
-      const result = await generateMultiEditDiff('/test.js', originalContent, edits);
+      const result = await generateMultiEditDiff('test.js', originalContent, edits);
 
       // After first edit: 'first content test'
       // After second edit: 'first content second'
@@ -364,7 +364,7 @@ line4`;
         }
       ];
 
-      const result = await generateMultiEditDiff('/test.js', originalContent, edits);
+      const result = await generateMultiEditDiff('test.js', originalContent, edits);
 
       expect(result.unifiedDiff.oldVersion).toBe(originalContent);
       expect(result.unifiedDiff.newVersion).toBe(originalContent);
@@ -450,7 +450,7 @@ line4`;
         }
       ];
 
-      const result = await generateMultiEditDiff('/test.js', originalContent, edits);
+      const result = await generateMultiEditDiff('test.js', originalContent, edits);
 
       // Should provide rollback information
       expect(result).toHaveProperty('rollbackSteps');

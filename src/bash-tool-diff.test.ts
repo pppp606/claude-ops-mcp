@@ -86,7 +86,7 @@ describe('Bash Tool Diff Generation', () => {
         '',
         0,
         [{
-          filePath: '/src/file.txt',
+          filePath: 'src/file.txt',
           changeType: ChangeType.UPDATE,
           beforeContent: originalContent,
           afterContent: modifiedContent
@@ -106,13 +106,13 @@ describe('Bash Tool Diff Generation', () => {
       expect(result.affectedFiles).toHaveLength(1);
 
       const affectedFile = result.affectedFiles[0];
-      expect(affectedFile!.filePath).toBe('/src/file.txt');
+      expect(affectedFile!.filePath).toBe('src/file.txt');
       expect(affectedFile!.changeType).toBe('update');
       expect(affectedFile!.unifiedDiff).toBeDefined();
 
       // Verify unified diff for modification
       const unifiedDiff = affectedFile!.unifiedDiff!;
-      expect(unifiedDiff.filename).toBe('/src/file.txt');
+      expect(unifiedDiff.filename).toBe('src/file.txt');
       expect(unifiedDiff.oldVersion).toBe(originalContent);
       expect(unifiedDiff.newVersion).toBe(modifiedContent);
       expect(unifiedDiff.diffText).toContain('-Original content');
@@ -160,12 +160,12 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [
           {
-            filePath: '/src/component.js',
+            filePath: 'src/component.js',
             changeType: ChangeType.CREATE,
             afterContent: 'template content'
           },
           {
-            filePath: '/src/old.js',
+            filePath: 'src/old.js',
             changeType: ChangeType.DELETE,
             beforeContent: 'old content'
           }
@@ -186,13 +186,13 @@ describe('Bash Tool Diff Generation', () => {
       // Check created file
       const createdFile = result.affectedFiles.find((f: any) => f.changeType === 'create');
       expect(createdFile).toBeDefined();
-      expect(createdFile!.filePath).toBe('/src/component.js');
+      expect(createdFile!.filePath).toBe('src/component.js');
       expect(createdFile!.unifiedDiff).toBeUndefined();
 
       // Check deleted file
       const deletedFile = result.affectedFiles.find((f: any) => f.changeType === 'delete');
       expect(deletedFile).toBeDefined();
-      expect(deletedFile!.filePath).toBe('/src/old.js');
+      expect(deletedFile!.filePath).toBe('src/old.js');
       expect(deletedFile!.unifiedDiff).toBeUndefined();
     });
   });
@@ -256,7 +256,7 @@ describe('Bash Tool Diff Generation', () => {
         'npm WARN deprecated package@1.0.0: This package is deprecated',
         0,
         [{
-          filePath: '/project/package-lock.json',
+          filePath: 'project/package-lock.json',
           changeType: ChangeType.UPDATE,
           beforeContent: '{"lockfileVersion": 1}',
           afterContent: '{"lockfileVersion": 2, "packages": {}}'
@@ -310,17 +310,17 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [
           {
-            filePath: '/dist/bundle.js',
+            filePath: 'dist/bundle.js',
             changeType: ChangeType.CREATE,
             afterContent: '(function(){console.log("bundled code");})();'
           },
           {
-            filePath: '/dist/bundle.js.map',
+            filePath: 'dist/bundle.js.map',
             changeType: ChangeType.CREATE,
             afterContent: '{"version":3,"sources":["src/index.js"]}'
           },
           {
-            filePath: '/src/index.js',
+            filePath: 'src/index.js',
             changeType: ChangeType.UPDATE,
             beforeContent: 'console.log("hello");',
             afterContent: 'console.log("hello world");'
@@ -339,17 +339,17 @@ describe('Bash Tool Diff Generation', () => {
       expect(result.affectedFiles).toHaveLength(3);
 
       // Check bundle creation
-      const bundleFile = result.affectedFiles.find(f => f.filePath === '/dist/bundle.js');
+      const bundleFile = result.affectedFiles.find(f => f.filePath === 'dist/bundle.js');
       expect(bundleFile).toBeDefined();
       expect(bundleFile!.changeType).toBe('create');
 
       // Check source map creation
-      const sourceMapFile = result.affectedFiles.find(f => f.filePath === '/dist/bundle.js.map');
+      const sourceMapFile = result.affectedFiles.find(f => f.filePath === 'dist/bundle.js.map');
       expect(sourceMapFile).toBeDefined();
       expect(sourceMapFile!.changeType).toBe('create');
 
       // Check source modification
-      const sourceFile = result.affectedFiles.find(f => f.filePath === '/src/index.js');
+      const sourceFile = result.affectedFiles.find(f => f.filePath === 'src/index.js');
       expect(sourceFile).toBeDefined();
       expect(sourceFile!.changeType).toBe('update');
       expect(sourceFile!.unifiedDiff).toBeDefined();
@@ -363,7 +363,7 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [
           {
-            filePath: '/src/components/ui/Button.tsx',
+            filePath: 'src/components/ui/Button.tsx',
             changeType: ChangeType.CREATE,
             afterContent: ''
           }
@@ -379,7 +379,7 @@ describe('Bash Tool Diff Generation', () => {
       );
 
       expect(result.affectedFiles).toHaveLength(1);
-      expect(result.affectedFiles[0]!.filePath).toBe('/src/components/ui/Button.tsx');
+      expect(result.affectedFiles[0]!.filePath).toBe('src/components/ui/Button.tsx');
       expect(result.affectedFiles[0]!.changeType).toBe('create');
     });
 
@@ -390,7 +390,7 @@ describe('Bash Tool Diff Generation', () => {
         '',
         0,
         [{
-          filePath: '/scripts/deploy.sh',
+          filePath: 'scripts/deploy.sh',
           changeType: ChangeType.UPDATE,
           beforeContent: '#!/bin/bash\necho "deploying..."',
           afterContent: '#!/bin/bash\necho "deploying..."' // content unchanged, only permissions
@@ -440,7 +440,7 @@ describe('Bash Tool Diff Generation', () => {
         '',
         0,
         [{
-          filePath: '/src/Button.tsx',
+          filePath: 'src/Button.tsx',
           changeType: ChangeType.UPDATE,
           beforeContent: originalContent,
           afterContent: modifiedContent
@@ -473,7 +473,7 @@ describe('Bash Tool Diff Generation', () => {
         '',
         0,
         [{
-          filePath: '/assets/new-logo.png',
+          filePath: 'assets/new-logo.png',
           changeType: ChangeType.CREATE,
           afterContent: '<binary content>' // simplified binary representation
         }]
@@ -673,7 +673,7 @@ describe('Bash Tool Diff Generation', () => {
         '',
         0,
         [{
-          filePath: '/dist/app.js',
+          filePath: 'dist/app.js',
           changeType: ChangeType.CREATE,
           afterContent: 'bundled content'
         }]
@@ -714,12 +714,12 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [
           {
-            filePath: '/important/files/config.json',
+            filePath: 'important/files/config.json',
             changeType: ChangeType.DELETE,
             beforeContent: '{"setting": "value"}'
           },
           {
-            filePath: '/important/files/data.txt',
+            filePath: 'important/files/data.txt',
             changeType: ChangeType.DELETE,
             beforeContent: 'important data'
           }
@@ -756,13 +756,13 @@ describe('Bash Tool Diff Generation', () => {
         0,
         [
           {
-            filePath: '/src/config.ts',
+            filePath: 'src/config.ts',
             changeType: ChangeType.UPDATE,
             beforeContent: 'export const config={value:1};',
             afterContent: 'export const config = { value: 1 };'
           },
           {
-            filePath: '/src/utils.ts',
+            filePath: 'src/utils.ts',
             changeType: ChangeType.UPDATE,
             beforeContent: 'function helper(){return true;}',
             afterContent: 'function helper() {\n  return true;\n}'

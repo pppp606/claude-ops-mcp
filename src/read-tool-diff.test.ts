@@ -44,7 +44,7 @@ describe('Read Tool Diff Generation', () => {
   describe('File Content Display', () => {
     it('should generate ReadDiff for complete file reading', async () => {
       const scenario = createMockReadScenario(
-        '/src/config/settings.json',
+        'src/config/settings.json',
         '{\n  "setting1": "value1",\n  "setting2": "value2",\n  "setting3": "value3"\n}',
         { expectedLinesRead: 5 }
       );
@@ -67,7 +67,7 @@ describe('Read Tool Diff Generation', () => {
       const expectedPartialContent = 'line 4\nline 5\nline 6\nline 7\nline 8';
 
       const scenario = createMockReadScenario(
-        '/src/utils/helper.ts',
+        'src/utils/helper.ts',
         expectedPartialContent,
         {
           offset: 3, // Start from line 4 (0-indexed)
@@ -97,7 +97,7 @@ describe('Read Tool Diff Generation', () => {
       const expectedContent = 'function test() {\n  return "hello";\n}\n\nconst value = 42;';
 
       const scenario = createMockReadScenario(
-        '/src/components/Test.tsx',
+        'src/components/Test.tsx',
         expectedContent,
         {
           limit: 5,
@@ -128,7 +128,7 @@ describe('Read Tool Diff Generation', () => {
       const multiLineContent = 'import React from "react";\n\nfunction Component() {\n  return (\n    <div>\n      <h1>Title</h1>\n      <p>Content</p>\n    </div>\n  );\n}\n\nexport default Component;';
 
       const result = await generateReadDiff(
-        '/src/components/Component.tsx',
+        'src/components/Component.tsx',
         multiLineContent
       );
 
@@ -140,7 +140,7 @@ describe('Read Tool Diff Generation', () => {
       const singleLineContent = 'export const API_URL = "https://api.example.com";';
 
       const result = await generateReadDiff(
-        '/src/config/api.ts',
+        'src/config/api.ts',
         singleLineContent
       );
 
@@ -154,7 +154,7 @@ describe('Read Tool Diff Generation', () => {
       const content = 'line 6\nline 7\nline 8';
 
       const result = await generateReadDiff(
-        '/src/test.txt',
+        'src/test.txt',
         content,
         5, // offset = 5 (start from line 6)
         3  // limit = 3 lines
@@ -171,7 +171,7 @@ describe('Read Tool Diff Generation', () => {
       const codeContent = 'class Calculator {\n  constructor() {\n    this.value = 0;\n  }\n\n  add(num) {\n    this.value += num;\n    return this;\n  }\n}';
 
       const result = await generateReadDiff(
-        '/src/calculator.js',
+        'src/calculator.js',
         codeContent
       );
 
@@ -187,7 +187,7 @@ describe('Read Tool Diff Generation', () => {
       const jsonContent = '{\n  "name": "test-project",\n  "version": "1.0.0",\n  "dependencies": {\n    "react": "^18.0.0"\n  }\n}';
 
       const result = await generateReadDiff(
-        '/package.json',
+        'package.json',
         jsonContent
       );
 
@@ -202,7 +202,7 @@ describe('Read Tool Diff Generation', () => {
       const configContent = 'module.exports = {\n  preset: "ts-jest",\n  testEnvironment: "node",\n  collectCoverageFrom: [\n    "src/**/*.{ts,tsx}",\n    "!src/**/*.d.ts"\n  ]\n};';
 
       const result = await generateReadDiff(
-        '/jest.config.js',
+        'jest.config.js',
         configContent
       );
 
@@ -216,7 +216,7 @@ describe('Read Tool Diff Generation', () => {
   describe('Edge Cases', () => {
     it('should handle empty file reading', async () => {
       const result = await generateReadDiff(
-        '/src/empty.txt',
+        'src/empty.txt',
         ''
       );
 
@@ -231,7 +231,7 @@ describe('Read Tool Diff Generation', () => {
       const whitespaceContent = '   \n\n  \t\n   ';
 
       const result = await generateReadDiff(
-        '/src/whitespace.txt',
+        'src/whitespace.txt',
         whitespaceContent
       );
 
@@ -243,7 +243,7 @@ describe('Read Tool Diff Generation', () => {
       const longLineContent = 'a'.repeat(5000) + '\nshort line\n' + 'b'.repeat(3000);
 
       const result = await generateReadDiff(
-        '/src/long-lines.txt',
+        'src/long-lines.txt',
         longLineContent
       );
 
@@ -272,7 +272,7 @@ describe('Read Tool Diff Generation', () => {
 
     it('should handle null content as empty string', async () => {
       const result = await generateReadDiff(
-        '/src/null-content.txt',
+        'src/null-content.txt',
         null as any
       );
 
@@ -284,7 +284,7 @@ describe('Read Tool Diff Generation', () => {
   describe('Tool-specific Integration', () => {
     it('should maintain consistency with ReadDiff type definition', async () => {
       const result = await generateReadDiff(
-        '/src/test.ts',
+        'src/test.ts',
         'test content\nsecond line'
       );
 
@@ -299,7 +299,7 @@ describe('Read Tool Diff Generation', () => {
 
     it('should provide optional range information when applicable', async () => {
       const result = await generateReadDiff(
-        '/src/test.ts',
+        'src/test.ts',
         'partial content',
         10, // offset
         5   // limit
@@ -333,7 +333,7 @@ describe('Read Tool Diff Generation', () => {
       const debugContent = 'console.log("Debug point 1");\nconst data = fetchData();\nconsole.log("Data:", data);\nprocessData(data);';
 
       const result = await generateReadDiff(
-        '/src/debug.js',
+        'src/debug.js',
         debugContent
       );
 
@@ -351,7 +351,7 @@ describe('Read Tool Diff Generation', () => {
       const largeContent = Array.from({ length: 1000 }, (_, i) => `Line ${i + 1}: Some content here`).join('\n');
 
       const result = await generateReadDiff(
-        '/src/large-file.txt',
+        'src/large-file.txt',
         largeContent
       );
 
@@ -364,7 +364,7 @@ describe('Read Tool Diff Generation', () => {
       const partialContent = Array.from({ length: 50 }, (_, i) => `Line ${i + 501}: Partial content`).join('\n');
 
       const result = await generateReadDiff(
-        '/src/large-file-partial.txt',
+        'src/large-file-partial.txt',
         partialContent,
         500, // Start from line 501
         50   // Read 50 lines
