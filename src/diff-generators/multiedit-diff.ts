@@ -145,7 +145,7 @@ export async function generateMultiEditDiff(
 
     for (let i = 0; i < normalizedEdits.length; i++) {
       const edit = normalizedEdits[i]!;
-      const previousContent = currentContent;
+      const _previousContent = currentContent;
 
       // Handle identical strings
       if (edit.oldString === edit.newString) {
