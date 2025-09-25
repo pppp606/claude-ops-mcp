@@ -73,7 +73,7 @@ export class InputValidator {
     // Workspace-based path validation (more robust than simple normalize check)
     try {
       // For test environment, relax validation but keep security checks
-      if (process.env.NODE_ENV === 'test') {
+      if (process.env['NODE_ENV'] === 'test') {
         // Basic security checks
         if (filePath.includes('\0')) {
           throw new SecurityError(`File path contains invalid characters`, 'path_traversal', filePath);
