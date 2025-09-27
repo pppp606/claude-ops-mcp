@@ -283,6 +283,104 @@ describe('Bash History API', () => {
         expect(result.commands).toHaveLength(1);
         expect(result.commands[0]?.command).toBe('Malformed bash operation'); // Uses summary as fallback
       });
+
+      it('should handle malformed result types gracefully', async () => {
+        const bashOperations = [
+          {
+            id: 'bash-malformed-result',
+            timestamp: '2024-01-01T10:00:00.000Z',
+            tool: 'Bash',
+            changeType: ChangeType.UPDATE,
+            summary: 'npm test',
+          },
+        ];
+
+        mockLogParser.LogParser.parseLogStream = jest
+          .fn()
+          .mockReturnValue(bashOperations);
+
+        // Mock file content with malformed result types
+        const malformedJsonlContent = JSON.stringify({
+          timestamp: '2024-01-01T10:00:00.000Z',
+          tool: 'Bash',
+          parameters: { command: 'npm test' },
+          result: {
+            stdout: 123, // Should be string, but is number
+            stderr: null, // Should be string, but is null
+            exitCode: 'failure', // Should be number, but is string
+          },
+        });
+
+        mockFs.readFile.mockResolvedValue(malformedJsonlContent);
+
+        const result = await handleListBashHistory({ limit: 10 });
+
+        expect(result.commands).toHaveLength(1);
+        const command = result.commands[0]!;
+
+        // Should use fallback values for malformed types
+        expect(command.command).toBe('npm test');
+        expect(command.exitCode).toBe(0); // Should fallback to 0 for non-number exitCode
+        expect(command.summary).toBe('Command executed'); // Should fallback when stdout/stderr are not strings
+      });
+
+      it('should handle timestamp collisions with composite key matching', async () => {
+        const sameTimestamp = '2024-01-01T10:00:00.000Z';
+        const bashOperations = [
+          {
+            id: 'bash-1',
+            timestamp: sameTimestamp,
+            tool: 'Bash',
+            changeType: ChangeType.UPDATE,
+            summary: 'git status',
+          },
+          {
+            id: 'bash-2',
+            timestamp: sameTimestamp,
+            tool: 'Bash',
+            changeType: ChangeType.UPDATE,
+            summary: 'npm test',
+          },
+        ];
+
+        mockLogParser.LogParser.parseLogStream = jest
+          .fn()
+          .mockReturnValue(bashOperations);
+
+        // Mock file content with two different commands at same timestamp
+        const jsonlContent = [
+          JSON.stringify({
+            timestamp: sameTimestamp,
+            tool: 'Bash',
+            parameters: { command: 'git status' },
+            result: { stdout: 'On branch main', stderr: '', exitCode: 0 },
+          }),
+          JSON.stringify({
+            timestamp: sameTimestamp,
+            tool: 'Bash',
+            parameters: { command: 'npm test' },
+            result: { stdout: 'Tests passed', stderr: '', exitCode: 0 },
+          }),
+        ].join('\n');
+
+        mockFs.readFile.mockResolvedValue(jsonlContent);
+
+        const result = await handleListBashHistory({ limit: 10 });
+
+        expect(result.commands).toHaveLength(2);
+
+        // Should match correctly by timestamp (and verify commands are distinct)
+        expect(result.commands[0]?.command).toBeDefined();
+        expect(result.commands[1]?.command).toBeDefined();
+        expect(result.commands[0]?.command).not.toBe(result.commands[1]?.command);
+
+        // Both commands should have their correct output
+        const gitCommand = result.commands.find(cmd => cmd.command === 'git status');
+        const npmCommand = result.commands.find(cmd => cmd.command === 'npm test');
+
+        expect(gitCommand?.summary).toContain('On branch main');
+        expect(npmCommand?.summary).toContain('Tests passed');
+      });
     });
   });
 

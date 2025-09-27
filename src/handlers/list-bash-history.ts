@@ -89,6 +89,10 @@ function parseRawLogEntry(logLine: string): RawLogEntry | null {
   }
 }
 
+/**
+ * Extracts Bash command information from raw log entry.
+ * Working directory resolution order: parameters.workingDirectory -> CLAUDE_PROJECT_PATH -> empty string
+ */
 function extractBashInfo(rawEntry: RawLogEntry): {
   command: string;
   stdout: string;
@@ -96,17 +100,21 @@ function extractBashInfo(rawEntry: RawLogEntry): {
   exitCode: number;
   workingDirectory: string;
 } {
-  const params = rawEntry.parameters;
-  const command = (params['command'] as string) || '';
+  const params = rawEntry.parameters ?? {};
 
-  // Extract output from result
-  const result = rawEntry.result as Record<string, unknown>;
-  const stdout = result?.stdout || '';
-  const stderr = result?.stderr || '';
-  const exitCode = typeof result?.exitCode === 'number' ? result.exitCode : 0;
+  // Extract command with type safety
+  const cmdVal = params['command'];
+  const command = typeof cmdVal === 'string' ? cmdVal : '';
 
-  // Working directory from parameters or current directory
-  const workingDirectory = (params['workingDirectory'] as string) || process.env['CLAUDE_PROJECT_PATH'] || '';
+  // Extract output from result with type safety
+  const result = (rawEntry.result ?? {}) as Record<string, unknown>;
+  const stdout = typeof result['stdout'] === 'string' ? result['stdout'] : '';
+  const stderr = typeof result['stderr'] === 'string' ? result['stderr'] : '';
+  const exitCode = typeof result['exitCode'] === 'number' ? result['exitCode'] : 0;
+
+  // Working directory resolution: parameters first, then environment, then empty
+  const wdVal = params['workingDirectory'];
+  const workingDirectory = typeof wdVal === 'string' ? wdVal : (process.env['CLAUDE_PROJECT_PATH'] ?? '');
 
   return {
     command,
@@ -189,9 +197,10 @@ export async function handleListBashHistory(
   // Filter only Bash operations
   const bashOperations = operations.filter(isBashOperation);
 
-  // Sort by timestamp (newest first)
+  // Sort by timestamp (newest first) with stable tiebreaker
   bashOperations.sort((a, b) => {
-    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    const timeDiff = new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    return timeDiff !== 0 ? timeDiff : b.id.localeCompare(a.id);
   });
 
   // Apply limit
@@ -201,22 +210,41 @@ export async function handleListBashHistory(
 
   // Parse raw log entries to get detailed Bash information
   const fileLines = fileContent.split('\n').filter(line => line.trim());
-  const bashInfoMap = new Map<string, ReturnType<typeof extractBashInfo>>();
+  const bashInfoArray: Array<{
+    timestamp: string;
+    command: string;
+    bashInfo: ReturnType<typeof extractBashInfo>;
+  }> = [];
 
   for (const line of fileLines) {
     const rawEntry = parseRawLogEntry(line);
     if (rawEntry && rawEntry.tool === 'Bash') {
       const bashInfo = extractBashInfo(rawEntry);
-      // Use timestamp as key since we don't have operation ID in raw log
-      bashInfoMap.set(rawEntry.timestamp, bashInfo);
+      bashInfoArray.push({
+        timestamp: rawEntry.timestamp,
+        command: bashInfo.command,
+        bashInfo,
+      });
     }
   }
 
   // Convert to BashHistoryItem format
   const commands = limitedOperations.map(operation => {
-    const bashInfo = bashInfoMap.get(operation.timestamp);
-    if (bashInfo) {
-      return convertToBashHistoryItem(operation, bashInfo);
+    // Find matching bash info using composite matching
+    const commandFromSummary = operation.summary?.split(' ').slice(0, 2).join(' ') || '';
+
+    let matchedBashInfo = bashInfoArray.find(entry =>
+      entry.timestamp === operation.timestamp &&
+      (entry.command === commandFromSummary || entry.command.startsWith(commandFromSummary.split(' ')[0] || ''))
+    );
+
+    // Fallback to timestamp-only matching
+    if (!matchedBashInfo) {
+      matchedBashInfo = bashInfoArray.find(entry => entry.timestamp === operation.timestamp);
+    }
+
+    if (matchedBashInfo) {
+      return convertToBashHistoryItem(operation, matchedBashInfo.bashInfo);
     } else {
       // Fallback for operations without detailed info
       return convertToBashHistoryItem(operation, {
@@ -298,11 +326,22 @@ export async function handleShowBashResult(
   const fileLines = fileContent.split('\n').filter(line => line.trim());
   let bashInfo: ReturnType<typeof extractBashInfo> | null = null;
 
+  // Try composite matching first for better accuracy
+  const commandFromSummary = operation.summary?.split(' ').slice(0, 2).join(' ') || '';
+
   for (const line of fileLines) {
     const rawEntry = parseRawLogEntry(line);
     if (rawEntry && rawEntry.tool === 'Bash' && rawEntry.timestamp === operation.timestamp) {
-      bashInfo = extractBashInfo(rawEntry);
-      break;
+      const tempBashInfo = extractBashInfo(rawEntry);
+
+      // Prefer command match, but accept any bash operation at same timestamp
+      if (!bashInfo || tempBashInfo.command === commandFromSummary ||
+          tempBashInfo.command.startsWith(commandFromSummary.split(' ')[0] || '')) {
+        bashInfo = tempBashInfo;
+        if (tempBashInfo.command === commandFromSummary) {
+          break; // Exact match found
+        }
+      }
     }
   }
 
