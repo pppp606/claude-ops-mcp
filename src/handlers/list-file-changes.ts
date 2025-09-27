@@ -131,11 +131,18 @@ export async function handleListFileChanges(
   ];
   filteredOperations = filterByChangeType(filteredOperations, changeTypes);
 
-  // Sort operations by timestamp (newest first)
+  // Sort operations by timestamp (newest first) with deterministic tiebreaker
   filteredOperations.sort((a, b) => {
     const timeA = new Date(a.timestamp).getTime();
     const timeB = new Date(b.timestamp).getTime();
-    return timeB - timeA;
+
+    // Primary sort by timestamp (newest first)
+    if (timeB !== timeA) {
+      return timeB - timeA;
+    }
+
+    // Tiebreaker: sort by operation ID for deterministic ordering
+    return b.id.localeCompare(a.id);
   });
 
   // Store total count before applying limit

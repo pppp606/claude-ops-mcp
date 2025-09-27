@@ -150,5 +150,34 @@ describe('FilePathMatcher', () => {
       const expected = '.';
       expect(matcher.getRelativePath(absolutePath)).toBe(expected);
     });
+
+    it('should handle similar path prefixes correctly', () => {
+      // Test case where workspace is /Users/test/project
+      // but path is /Users/test/project-other (should return null)
+      const similarPath = '/Users/test/project-other/src/index.ts';
+      expect(matcher.getRelativePath(similarPath)).toBeNull();
+    });
+
+    it('should handle nested similar prefixes', () => {
+      // Test workspace /Users/test/project/sub
+      // with path /Users/test/project/sub-other (should return null)
+      const nestedMatcher = new FilePathMatcher('/Users/test/project/sub');
+      const similarPath = '/Users/test/project/sub-other/file.ts';
+      expect(nestedMatcher.getRelativePath(similarPath)).toBeNull();
+    });
+
+    it('should correctly identify paths that go outside workspace using .. notation', () => {
+      // Test path that would resolve to outside workspace using relative navigation
+      const matcher = new FilePathMatcher('/Users/test/project');
+      const outsidePath = '/Users/test/other-project/file.ts';
+      expect(matcher.getRelativePath(outsidePath)).toBeNull();
+    });
+
+    it('should handle symlink-like path scenarios', () => {
+      // Test paths that might be confusing due to similar naming
+      const matcher = new FilePathMatcher('/Users/test/my-project');
+      const confusingPath = '/Users/test/my-project-backup/src/file.ts';
+      expect(matcher.getRelativePath(confusingPath)).toBeNull();
+    });
   });
 });
