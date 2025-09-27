@@ -1,8 +1,15 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  McpError,
+  ErrorCode,
+} from '@modelcontextprotocol/sdk/types.js';
 import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import { UIDManager } from './uid-manager';
 import { SessionDiscovery } from './session-discovery';
+import { handleListFileChanges, type ListFileChangesParams } from './handlers/list-file-changes';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -67,8 +74,64 @@ export class MCPServer {
   }
 
   private setupHandlers(): void {
-    // No custom handlers needed for now
-    // MCP SDK handles basic initialization automatically
+    // Register list tools handler
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: [
+          {
+            name: 'listFileChanges',
+            description: 'Get the change history for a specific file or path pattern. Returns only actual file changes (CREATE, UPDATE, DELETE operations), excluding READ operations.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                filePath: {
+                  type: 'string',
+                  description: 'File path or pattern to match against. Can be absolute path, relative path from workspace root, or partial path for pattern matching. Examples: "src/index.ts", "./components/Button.tsx", "helpers.ts"',
+                },
+                limit: {
+                  type: 'number',
+                  description: 'Maximum number of operations to return. Default: 100, Maximum: 1000',
+                  minimum: 1,
+                  maximum: 1000,
+                  default: 100,
+                },
+              },
+              required: ['filePath'],
+            },
+          },
+        ],
+      };
+    });
+
+    // Register call tool handler
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      if (request.params.name === 'listFileChanges') {
+        try {
+          const args = request.params.arguments as Record<string, unknown>;
+          const params: ListFileChangesParams = {
+            filePath: args['filePath'] as string,
+            ...(args['limit'] !== undefined && { limit: args['limit'] as number }),
+          };
+          const result = await handleListFileChanges(params);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error) {
+          throw new McpError(
+            ErrorCode.InternalError,
+            `Failed to list file changes: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
+        }
+      }
+
+      throw new McpError(ErrorCode.MethodNotFound, `Tool not found: ${request.params.name}`);
+    });
   }
 
   getServer(): Server {
