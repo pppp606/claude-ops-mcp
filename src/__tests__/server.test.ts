@@ -3,11 +3,27 @@ jest.mock('@modelcontextprotocol/sdk/server/index', () => ({
   Server: jest.fn().mockImplementation(() => ({
     connect: jest.fn(),
     close: jest.fn(),
+    setRequestHandler: jest.fn(),
   })),
 }));
 
 jest.mock('@modelcontextprotocol/sdk/server/stdio', () => ({
   StdioServerTransport: jest.fn(),
+}));
+
+jest.mock('@modelcontextprotocol/sdk/types', () => ({
+  CallToolRequestSchema: 'CallToolRequestSchema',
+  ListToolsRequestSchema: 'ListToolsRequestSchema',
+  McpError: class MockMcpError extends Error {
+    constructor(code: string, message: string) {
+      super(message);
+      this.name = 'McpError';
+    }
+  },
+  ErrorCode: {
+    InternalError: 'InternalError',
+    MethodNotFound: 'MethodNotFound',
+  },
 }));
 
 import { MCPServer } from '../server';
