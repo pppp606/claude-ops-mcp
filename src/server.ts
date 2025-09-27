@@ -10,6 +10,12 @@ import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import { UIDManager } from './uid-manager';
 import { SessionDiscovery } from './session-discovery';
 import { handleListFileChanges, type ListFileChangesParams } from './handlers/list-file-changes';
+import {
+  handleListBashHistory,
+  handleShowBashResult,
+  type ListBashHistoryParams,
+  type ShowBashResultParams
+} from './handlers/list-bash-history';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -99,6 +105,37 @@ export class MCPServer {
               required: ['filePath'],
             },
           },
+          {
+            name: 'listBashHistory',
+            description: 'Get the history of Bash commands executed in the current session, with summary information for quick overview.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                limit: {
+                  type: 'number',
+                  description: 'Maximum number of commands to return. Default: 100, Maximum: 1000',
+                  minimum: 1,
+                  maximum: 1000,
+                  default: 100,
+                },
+              },
+              required: [],
+            },
+          },
+          {
+            name: 'showBashResult',
+            description: 'Get detailed output (stdout, stderr) for a specific Bash command by ID.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'The unique ID of the Bash command to retrieve detailed results for',
+                },
+              },
+              required: ['id'],
+            },
+          },
         ],
       };
     });
@@ -126,6 +163,54 @@ export class MCPServer {
           throw new McpError(
             ErrorCode.InternalError,
             `Failed to list file changes: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
+        }
+      }
+
+      if (request.params.name === 'listBashHistory') {
+        try {
+          const args = request.params.arguments as Record<string, unknown>;
+          const params: ListBashHistoryParams = {
+            ...(args['limit'] !== undefined && { limit: args['limit'] as number }),
+          };
+          const result = await handleListBashHistory(params);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error) {
+          throw new McpError(
+            ErrorCode.InternalError,
+            `Failed to list bash history: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
+        }
+      }
+
+      if (request.params.name === 'showBashResult') {
+        try {
+          const args = request.params.arguments as Record<string, unknown>;
+          const params: ShowBashResultParams = {
+            id: args['id'] as string,
+          };
+          const result = await handleShowBashResult(params);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error) {
+          throw new McpError(
+            ErrorCode.InternalError,
+            `Failed to show bash result: ${error instanceof Error ? error.message : 'Unknown error'}`
           );
         }
       }
