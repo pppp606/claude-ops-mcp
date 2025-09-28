@@ -62,7 +62,13 @@ jobs:
         
       - name: Build project
         run: npm run build
-        
+
+      - name: Verify SHA pinning
+        run: bash ./test-sha-pinning.sh
+
+      - name: Verify workflow permissions
+        run: bash ./test-workflow-permissions.sh
+
       - name: Upload coverage to Codecov
         if: matrix.node-version == '20.x'
         uses: codecov/codecov-action@9cc74bf7e13a810454a28846494ddbc3795eb693 # v3.1.6
