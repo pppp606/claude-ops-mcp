@@ -44,23 +44,23 @@ updates:
           - "ts-jest"
           - "@types/jest"
 
-  # GitHub Actions will be managed via SHA pinning and Renovate
-  # Commenting out for now, will be removed after Renovate setup
-  # - package-ecosystem: "github-actions"
-  #   directory: "/"
-  #   schedule:
-  #     interval: "monthly"
-  #     day: "monday"
-  #     time: "09:00"
-  #     timezone: "Asia/Tokyo"
-  #   open-pull-requests-limit: 3
-  #   reviewers:
-  #     - "pppp606"
-  #   assignees:
-  #     - "pppp606"
-  #   commit-message:
-  #     prefix: "ci"
-  #     include: "scope"
-  #   labels:
-  #     - "github-actions"
-  #     - "automated"
+  # GitHub Actions updates with SHA pinning support
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "pppp606"
+    assignees:
+      - "pppp606"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "github-actions"
+      - "automated"
+      - "security"
