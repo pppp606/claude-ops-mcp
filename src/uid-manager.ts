@@ -7,6 +7,7 @@ interface UIDMetadata {
 
 export class UIDManager {
   private static currentUID: string | null = null;
+  private static cachedSessionFile: string | null = null;
   private uid: string | null = null;
   private metadata: UIDMetadata | null = null;
 
@@ -20,6 +21,14 @@ export class UIDManager {
 
   static getCurrentUID(): string | null {
     return UIDManager.currentUID;
+  }
+
+  static setCachedSessionFile(sessionFile: string): void {
+    UIDManager.cachedSessionFile = sessionFile;
+  }
+
+  static getCachedSessionFile(): string | null {
+    return UIDManager.cachedSessionFile;
   }
 
   getUID(): string | null {

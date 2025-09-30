@@ -3,6 +3,7 @@ import { ChangeType } from './types/operation-index';
 import type { OperationIndex } from './types/operation-index';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { UIDManager } from './uid-manager';
 
 // Mock dependencies
 jest.mock('fs/promises');
@@ -23,14 +24,16 @@ describe('listFileChanges Integration Test', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Set up environment variables
-    process.env['CLAUDE_SESSION_UID'] = 'test-session-uid';
+    // Set up environment variables and cache session file
     process.env['CLAUDE_PROJECT_PATH'] = mockWorkspaceRoot;
+    // Pre-cache the session file to bypass session discovery
+    UIDManager.setCachedSessionFile(mockSessionFile);
   });
 
   afterEach(() => {
-    delete process.env['CLAUDE_SESSION_UID'];
     delete process.env['CLAUDE_PROJECT_PATH'];
+    // Clear the cache
+    UIDManager.setCachedSessionFile('');
   });
 
   describe('Complete Flow Integration', () => {

@@ -1,10 +1,12 @@
 import type { OperationIndex } from '../types/operation-index';
 import { SessionDiscovery } from '../session-discovery';
 import { LogParser } from '../parsers/log-parser';
+import { UIDManager } from '../uid-manager';
 import * as fs from 'fs/promises';
 
 export interface ListBashHistoryParams {
   limit?: number;
+  toolUseId?: string;
 }
 
 export interface ListBashHistoryResponse {
@@ -25,6 +27,7 @@ export interface BashHistoryItem {
 
 export interface ShowBashResultParams {
   id: string;
+  toolUseId?: string;
 }
 
 export interface BashResult {
@@ -114,7 +117,7 @@ function extractBashInfo(rawEntry: RawLogEntry): {
 
   // Working directory resolution: parameters first, then environment, then empty
   const wdVal = params['workingDirectory'];
-  const workingDirectory = typeof wdVal === 'string' ? wdVal : (process.env['CLAUDE_PROJECT_PATH'] ?? '');
+  const workingDirectory = typeof wdVal === 'string' ? wdVal : process.cwd();
 
   return {
     command,
@@ -157,30 +160,32 @@ export async function handleListBashHistory(
 ): Promise<ListBashHistoryResponse> {
   const limit = validateLimit(params.limit);
 
-  // Get environment variables
-  const sessionUID = process.env['CLAUDE_SESSION_UID'];
-  const workspaceRoot = process.env['CLAUDE_PROJECT_PATH'];
+  // Try to get cached session file first
+  let sessionFile = UIDManager.getCachedSessionFile();
 
-  if (!sessionUID) {
-    throw new Error('No active Claude session found');
-  }
+  if (!sessionFile) {
+    // Not cached yet - try to find it using toolUseId
+    if (!params.toolUseId) {
+      throw new Error('Tool use ID not provided by Claude Code');
+    }
 
-  if (!workspaceRoot) {
-    throw new Error('Workspace root not available');
-  }
+    const sessionDiscovery = new SessionDiscovery();
+    const sessionInfo = await sessionDiscovery.findSessionByToolUseId(params.toolUseId);
 
-  // Find session file
-  const sessionDiscovery = new SessionDiscovery();
-  const sessionInfo = await sessionDiscovery.findSessionByUID(sessionUID);
+    if (!sessionInfo || !sessionInfo.sessionFile) {
+      // Session file not found - this shouldn't happen with toolUseId
+      throw new Error(`Session file not found for tool use ID: ${params.toolUseId}`);
+    }
 
-  if (!sessionInfo) {
-    throw new Error('Session file not found');
+    // Found the session file - cache it for future calls
+    sessionFile = sessionInfo.sessionFile;
+    UIDManager.setCachedSessionFile(sessionFile);
   }
 
   // Read and parse session file
   let fileContent: string;
   try {
-    const buffer = await fs.readFile(sessionInfo.sessionFile);
+    const buffer = await fs.readFile(sessionFile);
     fileContent = buffer.toString('utf-8');
   } catch (error) {
     throw new Error('Failed to read session file: ' + (error instanceof Error ? error.message : 'Unknown error'));
@@ -252,7 +257,7 @@ export async function handleListBashHistory(
         stdout: '',
         stderr: '',
         exitCode: 0,
-        workingDirectory: process.env['CLAUDE_PROJECT_PATH'] || '',
+        workingDirectory: process.cwd() || '',
       });
     }
   });
@@ -274,30 +279,32 @@ export async function handleShowBashResult(
     throw new Error('Command ID is required');
   }
 
-  // Get environment variables
-  const sessionUID = process.env['CLAUDE_SESSION_UID'];
-  const workspaceRoot = process.env['CLAUDE_PROJECT_PATH'];
+  // Try to get cached session file first
+  let sessionFile = UIDManager.getCachedSessionFile();
 
-  if (!sessionUID) {
-    throw new Error('No active Claude session found');
-  }
+  if (!sessionFile) {
+    // Not cached yet - try to find it using toolUseId
+    if (!params.toolUseId) {
+      throw new Error('Tool use ID not provided by Claude Code');
+    }
 
-  if (!workspaceRoot) {
-    throw new Error('Workspace root not available');
-  }
+    const sessionDiscovery = new SessionDiscovery();
+    const sessionInfo = await sessionDiscovery.findSessionByToolUseId(params.toolUseId);
 
-  // Find session file
-  const sessionDiscovery = new SessionDiscovery();
-  const sessionInfo = await sessionDiscovery.findSessionByUID(sessionUID);
+    if (!sessionInfo || !sessionInfo.sessionFile) {
+      // Session file not found - this shouldn't happen with toolUseId
+      throw new Error(`Session file not found for tool use ID: ${params.toolUseId}`);
+    }
 
-  if (!sessionInfo) {
-    throw new Error('Session file not found');
+    // Found the session file - cache it for future calls
+    sessionFile = sessionInfo.sessionFile;
+    UIDManager.setCachedSessionFile(sessionFile);
   }
 
   // Read and parse session file
   let fileContent: string;
   try {
-    const buffer = await fs.readFile(sessionInfo.sessionFile);
+    const buffer = await fs.readFile(sessionFile);
     fileContent = buffer.toString('utf-8');
   } catch (error) {
     throw new Error('Failed to read session file: ' + (error instanceof Error ? error.message : 'Unknown error'));

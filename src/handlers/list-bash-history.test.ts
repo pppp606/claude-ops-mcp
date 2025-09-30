@@ -4,6 +4,7 @@ import type { OperationIndex } from '../types/operation-index';
 import * as sessionDiscovery from '../session-discovery';
 import * as logParser from '../parsers/log-parser';
 import * as fs from 'fs/promises';
+import { UIDManager } from '../uid-manager';
 
 // Mock dependencies
 jest.mock('../session-discovery');
@@ -95,12 +96,14 @@ describe('Bash History API', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env['CLAUDE_PROJECT_PATH'] = mockWorkspaceRoot;
-    process.env['CLAUDE_SESSION_UID'] = 'test-session-uid';
+    // Pre-cache the session file to bypass session discovery
+    UIDManager.setCachedSessionFile(mockSessionFile);
   });
 
   afterEach(() => {
     delete process.env['CLAUDE_PROJECT_PATH'];
-    delete process.env['CLAUDE_SESSION_UID'];
+    // Clear the cache
+    UIDManager.setCachedSessionFile('');
   });
 
   describe('handleListBashHistory', () => {
@@ -159,7 +162,8 @@ describe('Bash History API', () => {
         const result = await handleListBashHistory({ limit: 10 });
 
         result.commands.forEach(cmd => {
-          expect(cmd.workingDirectory).toBe(mockWorkspaceRoot);
+          // Working directory should be process.cwd() since we don't use environment variables
+          expect(cmd.workingDirectory).toBe(process.cwd());
         });
       });
     });
@@ -233,19 +237,12 @@ describe('Bash History API', () => {
     });
 
     describe('Error handling', () => {
-      it('should throw error when session UID is not available', async () => {
-        delete process.env['CLAUDE_SESSION_UID'];
+      it('should throw error when toolUseId is not provided and cache is empty', async () => {
+        // Clear cache to test error scenario
+        UIDManager.setCachedSessionFile('');
 
         await expect(handleListBashHistory({ limit: 10 })).rejects.toThrow(
-          'No active Claude session found'
-        );
-      });
-
-      it('should throw error when workspace root is not available', async () => {
-        delete process.env['CLAUDE_PROJECT_PATH'];
-
-        await expect(handleListBashHistory({ limit: 10 })).rejects.toThrow(
-          'Workspace root not available'
+          'Tool use ID not provided by Claude Code'
         );
       });
 

@@ -16,6 +16,10 @@ import {
   type ListBashHistoryParams,
   type ShowBashResultParams
 } from './handlers/list-bash-history';
+import {
+  handleShowOperationDiff,
+  type ShowOperationDiffParams
+} from './handlers/show-operation-diff';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -48,8 +52,12 @@ export class MCPServer {
   private sessionDiscovery: SessionDiscovery;
   private currentSessionFile: string | null = null;
   private static readonly SUPPORTED_PROTOCOL_VERSION = '2024-11-05';
+  private readonly instanceId: string;
 
   constructor() {
+    this.instanceId = Math.random().toString(36).substring(7);
+    console.error(`[claude-ops-mcp] Constructor called - Instance ID: ${this.instanceId}`);
+
     this.serverInfo = {
       name: 'claude-ops-mcp',
       version: '0.1.0',
@@ -136,18 +144,37 @@ export class MCPServer {
               required: ['id'],
             },
           },
+          {
+            name: 'showOperationDiff',
+            description: 'Get detailed diff information for a specific operation. Use this after calling listFileChanges or listBashHistory to get the operation ID. For Edit/Write tools, returns old/new content and unified diff. For Bash commands, returns command output (stdout/stderr).',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'The operation ID from listFileChanges or listBashHistory response (e.g., "toolu_01UGtbuNtHZtHP28AaTXz2js")',
+                },
+              },
+              required: ['id'],
+            },
+          },
         ],
       };
     });
 
     // Register call tool handler
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      // Extract toolUseId from _meta
+      const meta = (request.params as any)._meta;
+      const toolUseId = meta?.['claudecode/toolUseId'] as string | undefined;
+
       if (request.params.name === 'listFileChanges') {
         try {
           const args = request.params.arguments as Record<string, unknown>;
           const params: ListFileChangesParams = {
             filePath: args['filePath'] as string,
             ...(args['limit'] !== undefined && { limit: args['limit'] as number }),
+            ...(toolUseId && { toolUseId }),
           };
           const result = await handleListFileChanges(params);
 
@@ -172,6 +199,7 @@ export class MCPServer {
           const args = request.params.arguments as Record<string, unknown>;
           const params: ListBashHistoryParams = {
             ...(args['limit'] !== undefined && { limit: args['limit'] as number }),
+            ...(toolUseId && { toolUseId }),
           };
           const result = await handleListBashHistory(params);
 
@@ -196,6 +224,7 @@ export class MCPServer {
           const args = request.params.arguments as Record<string, unknown>;
           const params: ShowBashResultParams = {
             id: args['id'] as string,
+            ...(toolUseId && { toolUseId }),
           };
           const result = await handleShowBashResult(params);
 
@@ -211,6 +240,31 @@ export class MCPServer {
           throw new McpError(
             ErrorCode.InternalError,
             `Failed to show bash result: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
+        }
+      }
+
+      if (request.params.name === 'showOperationDiff') {
+        try {
+          const args = request.params.arguments as Record<string, unknown>;
+          const params: ShowOperationDiffParams = {
+            id: args['id'] as string,
+            ...(toolUseId && { toolUseId }),
+          };
+          const result = await handleShowOperationDiff(params);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error) {
+          throw new McpError(
+            ErrorCode.InternalError,
+            `Failed to show operation diff: ${error instanceof Error ? error.message : 'Unknown error'}`
           );
         }
       }
@@ -249,12 +303,23 @@ export class MCPServer {
     // Store UID globally for future access
     UIDManager.setCurrentUID(uid);
 
-    // TODO: Add protocol version validation and error handling for unsupported versions
+    // Return initialization result with UID embedded in serverInfo
     return {
       protocolVersion,
-      serverInfo: this.serverInfo,
+      serverInfo: {
+        ...this.serverInfo,
+        // Include UID in serverInfo (extended property)
+        sessionUID: uid,
+      } as Implementation,
       capabilities: this.capabilities,
-    };
+      // Add meta field to potentially be logged by Claude
+      meta: {
+        sessionUID: uid,
+        timestamp: metadata.timestamp,
+      },
+      // Add instructions that might be logged
+      instructions: `MCP Server initialized with Session UID: ${uid}`,
+    } as InitializeResult;
   }
 
   async start(): Promise<void> {

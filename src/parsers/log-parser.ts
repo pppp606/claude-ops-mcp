@@ -13,6 +13,24 @@ interface RawLogEntry {
 }
 
 /**
+ * Interface for Claude Code's actual log format
+ */
+interface ClaudeCodeLogEntry {
+  type: string;
+  timestamp: string;
+  message?: {
+    content?: Array<{
+      type: string;
+      id?: string;
+      name?: string;
+      input?: Record<string, unknown>;
+      tool_use_id?: string;
+    }>;
+  };
+  toolUseResult?: Record<string, unknown>;
+}
+
+/**
  * Configuration options for log parsing
  */
 interface ParseOptions {
@@ -83,18 +101,18 @@ export class LogParser {
    * Parses a single log entry string into an OperationIndex object
    * @param logEntry - JSON string representing a single log entry
    * @param options - Parsing options
-   * @returns OperationIndex object
+   * @returns OperationIndex object or null if not a tool use entry
    * @throws LogParseError for malformed JSON or missing required fields
    */
   static parseLogEntry(
     logEntry: string,
     options: ParseOptions = {}
-  ): OperationIndex {
-    let rawEntry: RawLogEntry;
+  ): OperationIndex | null {
+    let entry: any;
 
     // Parse JSON with better error handling
     try {
-      rawEntry = JSON.parse(logEntry);
+      entry = JSON.parse(logEntry);
     } catch (error) {
       throw new LogParseError(
         'Invalid JSON format',
@@ -103,21 +121,93 @@ export class LogParser {
       );
     }
 
-    // Validate required fields with detailed error messages
-    if (!rawEntry.timestamp) {
+    // Try to parse Claude Code format first
+    const claudeCodeOp = this.parseClaudeCodeEntry(entry, options);
+    if (claudeCodeOp) {
+      return claudeCodeOp;
+    }
+
+    // Fall back to old format (for backward compatibility)
+    return this.parseOldFormatEntry(entry, options);
+  }
+
+  /**
+   * Parses Claude Code log format (assistant messages with tool_use)
+   */
+  private static parseClaudeCodeEntry(
+    entry: ClaudeCodeLogEntry,
+    options: ParseOptions
+  ): OperationIndex | null {
+    // Only process assistant messages with tool_use
+    if (entry.type !== 'assistant' || !entry.message?.content) {
+      return null;
+    }
+
+    // Find tool_use in content array
+    const toolUse = entry.message.content.find(item => item.type === 'tool_use');
+    if (!toolUse || !toolUse.name || !toolUse.input) {
+      return null;
+    }
+
+    const tool = toolUse.name;
+    const parameters = toolUse.input;
+    const timestamp = entry.timestamp;
+
+    if (!timestamp) {
       throw new LogParseError('Missing required field: timestamp');
     }
+
+    // Validate timestamp format if requested
+    if (options.validateTimestamp && !this.isValidTimestamp(timestamp)) {
+      throw new LogParseError(`Invalid timestamp format: ${timestamp}`);
+    }
+
+    // Extract file path from parameters if available
+    const filePath = this.extractFilePath(parameters, tool);
+
+    // Generate operation summary
+    const summary = this.generateSummary(tool, parameters, filePath);
+
+    // Determine change type based on tool
+    const changeType = this.determineChangeType(tool);
+
+    const operation: OperationIndex = {
+      id: toolUse.id || UIDManager.generateUID(),
+      timestamp,
+      tool,
+      summary,
+      changeType,
+    };
+
+    if (filePath) {
+      operation.filePath = filePath;
+    }
+
+    return operation;
+  }
+
+  /**
+   * Parses old log format (for backward compatibility)
+   */
+  private static parseOldFormatEntry(
+    rawEntry: RawLogEntry,
+    options: ParseOptions
+  ): OperationIndex | null {
+    // Validate required fields with detailed error messages
+    if (!rawEntry.timestamp) {
+      return null;
+    }
     if (!rawEntry.tool) {
-      throw new LogParseError('Missing required field: tool');
+      return null;
     }
     if (!rawEntry.parameters) {
-      throw new LogParseError('Missing required field: parameters');
+      return null;
     }
     if (
       typeof rawEntry.parameters !== 'object' ||
       Array.isArray(rawEntry.parameters)
     ) {
-      throw new LogParseError('Invalid parameters type');
+      return null;
     }
 
     // Validate timestamp format if requested
@@ -221,7 +311,10 @@ export class LogParser {
         const operation = this.parseLogEntry(trimmedLine, {
           validateTimestamp,
         });
-        operations.push(operation);
+        // Skip entries that don't parse to operations (e.g., non-tool entries)
+        if (operation) {
+          operations.push(operation);
+        }
       } catch (error) {
         if (skipMalformed) {
           skippedCount++;
