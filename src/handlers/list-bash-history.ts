@@ -160,8 +160,6 @@ export async function handleListBashHistory(
 ): Promise<ListBashHistoryResponse> {
   const limit = validateLimit(params.limit);
 
-  const workspaceRoot = process.cwd();
-
   // Try to get cached session file first
   let sessionFile = UIDManager.getCachedSessionFile();
 
@@ -280,8 +278,6 @@ export async function handleShowBashResult(
   if (!id || id.trim() === '') {
     throw new Error('Command ID is required');
   }
-
-  const workspaceRoot = process.cwd();
 
   // Try to get cached session file first
   let sessionFile = UIDManager.getCachedSessionFile();

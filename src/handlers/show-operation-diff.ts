@@ -1,6 +1,5 @@
 import { SessionDiscovery } from '../session-discovery';
 import { UIDManager } from '../uid-manager';
-import * as fs from 'fs/promises';
 import { createReadStream } from 'fs';
 import * as readline from 'readline';
 
@@ -195,7 +194,6 @@ export async function handleShowOperationDiff(
     if (tool === 'Edit' || tool === 'Write' || tool === 'MultiEdit') {
       const oldString = result['oldString'] as string | undefined;
       const newString = result['newString'] as string | undefined;
-      const structuredPatch = result['structuredPatch'] as any;
 
       response.diff = {};
 
