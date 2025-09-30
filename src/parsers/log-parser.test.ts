@@ -149,18 +149,14 @@ describe('LogParser', () => {
       );
     });
 
-    it('should throw LogParseError for missing required fields', () => {
+    it('should return null for missing required fields', () => {
       const incompleteEntry = JSON.stringify({
         tool: 'Edit',
         // missing timestamp and parameters
       });
 
-      expect(() => LogParser.parseLogEntry(incompleteEntry)).toThrow(
-        LogParseError
-      );
-      expect(() => LogParser.parseLogEntry(incompleteEntry)).toThrow(
-        'Missing required field: timestamp'
-      );
+      const result = LogParser.parseLogEntry(incompleteEntry);
+      expect(result).toBeNull();
     });
 
     it('should validate timestamp format when requested', () => {

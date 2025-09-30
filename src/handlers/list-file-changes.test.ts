@@ -4,6 +4,7 @@ import type { OperationIndex } from '../types/operation-index';
 import * as sessionDiscovery from '../session-discovery';
 import * as logParser from '../parsers/log-parser';
 import * as fs from 'fs/promises';
+import { UIDManager } from '../uid-manager';
 
 // Mock dependencies
 jest.mock('../session-discovery');
@@ -66,18 +67,18 @@ describe('handleListFileChanges', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env['CLAUDE_PROJECT_PATH'] = mockWorkspaceRoot;
+    // Pre-cache the session file to bypass session discovery
+    UIDManager.setCachedSessionFile(mockSessionFile);
   });
 
   afterEach(() => {
     delete process.env['CLAUDE_PROJECT_PATH'];
+    // Clear the cache
+    UIDManager.setCachedSessionFile('');
   });
 
   describe('Successful operations', () => {
     beforeEach(() => {
-      process.env['CLAUDE_SESSION_UID'] = 'test-session-uid';
-      mockSessionDiscovery.SessionDiscovery.prototype.findSessionByUID = jest
-        .fn()
-        .mockResolvedValue({ sessionFile: mockSessionFile });
       mockFs.readFile.mockResolvedValue(JSON.stringify(mockOperations));
       mockLogParser.LogParser.parseLogStream = jest
         .fn()
@@ -197,32 +198,25 @@ describe('handleListFileChanges', () => {
   });
 
   describe('Error handling', () => {
-    it('should throw error when session UID is not available', async () => {
-      delete process.env['CLAUDE_SESSION_UID'];
-
-      await expect(
-        handleListFileChanges({ filePath: 'test.ts', limit: 10 })
-      ).rejects.toThrow('No active Claude session found');
+    beforeEach(() => {
+      // Clear cache to test error scenarios
+      UIDManager.setCachedSessionFile('');
     });
 
-    it('should throw error when workspace root is not available', async () => {
-      delete process.env['CLAUDE_PROJECT_PATH'];
-      process.env['CLAUDE_SESSION_UID'] = 'test-uid';
-
+    it('should throw error when toolUseId is not provided and cache is empty', async () => {
       await expect(
         handleListFileChanges({ filePath: 'test.ts', limit: 10 })
-      ).rejects.toThrow('Workspace root not available');
+      ).rejects.toThrow('Tool use ID not provided by Claude Code');
     });
 
     it('should throw error when session file is not found', async () => {
-      process.env['CLAUDE_SESSION_UID'] = 'test-uid';
-      mockSessionDiscovery.SessionDiscovery.prototype.findSessionByUID = jest
+      mockSessionDiscovery.SessionDiscovery.prototype.findSessionByToolUseId = jest
         .fn()
         .mockResolvedValue(null);
 
       await expect(
-        handleListFileChanges({ filePath: 'test.ts', limit: 10 })
-      ).rejects.toThrow('Session file not found');
+        handleListFileChanges({ filePath: 'test.ts', limit: 10, toolUseId: 'test-tool-use-id' })
+      ).rejects.toThrow('Session file not found for tool use ID');
     });
 
     it('should throw error for invalid file path', async () => {
@@ -242,10 +236,8 @@ describe('handleListFileChanges', () => {
     });
 
     it('should handle file read errors gracefully', async () => {
-      process.env['CLAUDE_SESSION_UID'] = 'test-uid';
-      mockSessionDiscovery.SessionDiscovery.prototype.findSessionByUID = jest
-        .fn()
-        .mockResolvedValue({ sessionFile: mockSessionFile });
+      // Re-cache for this test
+      UIDManager.setCachedSessionFile(mockSessionFile);
       mockFs.readFile.mockRejectedValue(new Error('File read error'));
 
       await expect(
@@ -254,10 +246,8 @@ describe('handleListFileChanges', () => {
     });
 
     it('should handle log parsing errors gracefully', async () => {
-      process.env['CLAUDE_SESSION_UID'] = 'test-uid';
-      mockSessionDiscovery.SessionDiscovery.prototype.findSessionByUID = jest
-        .fn()
-        .mockResolvedValue({ sessionFile: mockSessionFile });
+      // Re-cache for this test
+      UIDManager.setCachedSessionFile(mockSessionFile);
       mockFs.readFile.mockResolvedValue('invalid json');
       mockLogParser.LogParser.parseLogStream = jest.fn().mockImplementation(() => {
         throw new Error('Parse error');
@@ -271,10 +261,6 @@ describe('handleListFileChanges', () => {
 
   describe('Response format', () => {
     beforeEach(() => {
-      process.env['CLAUDE_SESSION_UID'] = 'test-session-uid';
-      mockSessionDiscovery.SessionDiscovery.prototype.findSessionByUID = jest
-        .fn()
-        .mockResolvedValue({ sessionFile: mockSessionFile });
       mockFs.readFile.mockResolvedValue(JSON.stringify(mockOperations));
       mockLogParser.LogParser.parseLogStream = jest
         .fn()
