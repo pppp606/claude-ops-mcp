@@ -11,6 +11,9 @@
  */
 
 import { MCPServer } from '../server';
+import { handleListFileChanges } from '../handlers/list-file-changes';
+import { handleListBashHistory, handleShowBashResult } from '../handlers/list-bash-history';
+import { handleShowOperationDiff } from '../handlers/show-operation-diff';
 
 describe('SDK 1.18.2 Compatibility', () => {
   let server: MCPServer;
@@ -170,25 +173,21 @@ describe('Tool Handler Compatibility (SDK 1.18.2)', () => {
   describe('Handler API Stability', () => {
     it('should maintain handleListFileChanges export', () => {
       // Verify handlers are still exported with same signatures
-      const { handleListFileChanges } = require('../handlers/list-file-changes');
       expect(handleListFileChanges).toBeDefined();
       expect(typeof handleListFileChanges).toBe('function');
     });
 
     it('should maintain handleListBashHistory export', () => {
-      const { handleListBashHistory } = require('../handlers/list-bash-history');
       expect(handleListBashHistory).toBeDefined();
       expect(typeof handleListBashHistory).toBe('function');
     });
 
     it('should maintain handleShowBashResult export', () => {
-      const { handleShowBashResult } = require('../handlers/list-bash-history');
       expect(handleShowBashResult).toBeDefined();
       expect(typeof handleShowBashResult).toBe('function');
     });
 
     it('should maintain handleShowOperationDiff export', () => {
-      const { handleShowOperationDiff } = require('../handlers/show-operation-diff');
       expect(handleShowOperationDiff).toBeDefined();
       expect(typeof handleShowOperationDiff).toBe('function');
     });
