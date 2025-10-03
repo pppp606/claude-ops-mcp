@@ -24,6 +24,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 interface ServerCapabilities {
+  [key: string]: unknown;
   tools?: Record<string, unknown>;
   resources?: Record<string, unknown>;
   prompts?: Record<string, unknown>;
@@ -69,7 +70,9 @@ export class MCPServer {
       prompts: {},
     };
 
-    this.server = new Server(this.serverInfo);
+    this.server = new Server(this.serverInfo, {
+      capabilities: this.capabilities,
+    });
     this.uidManager = new UIDManager();
     this.sessionDiscovery = new SessionDiscovery();
 
