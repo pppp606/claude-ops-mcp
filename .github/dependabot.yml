@@ -1,6 +1,9 @@
+# Dependabot configuration for automated dependency updates
+# See: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
 version: 2
 updates:
-  # Enable version updates for npm
+  # npm: weekly, single PR, patch/minor only
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -8,43 +11,28 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Tokyo"
-    open-pull-requests-limit: 5
-    reviewers:
-      - "pppp606"
-    assignees:
-      - "pppp606"
-    commit-message:
-      prefix: "deps"
-      include: "scope"
+    open-pull-requests-limit: 1
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+    groups:
+      all-patch-minor:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+          - "minor"
     labels:
       - "dependencies"
       - "automated"
-    # Group development dependencies for easier management
-    groups:
-      development-dependencies:
-        dependency-type: "development"
-        patterns:
-          - "@types/*"
-          - "eslint*"
-          - "@typescript-eslint/*"
-          - "prettier"
-          - "jest"
-          - "ts-jest"
-      types:
-        patterns:
-          - "@types/*"
-      linting:
-        patterns:
-          - "eslint*"
-          - "@typescript-eslint/*"
-          - "prettier"
-      testing:
-        patterns:
-          - "jest"
-          - "ts-jest"
-          - "@types/jest"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    reviewers:
+      - "pppp606"
 
-  # GitHub Actions updates with SHA pinning support
+  # GitHub Actions: monthly, single PR
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -52,15 +40,15 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Tokyo"
-    open-pull-requests-limit: 3
-    reviewers:
-      - "pppp606"
-    assignees:
-      - "pppp606"
+    open-pull-requests-limit: 1
+    groups:
+      all-actions:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automated"
     commit-message:
       prefix: "ci"
       include: "scope"
-    labels:
-      - "github-actions"
-      - "automated"
-      - "security"
