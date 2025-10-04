@@ -112,18 +112,11 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Run OSV-Scanner
-        uses: google/osv-scanner-action@v1
+        uses: google/osv-scanner-action@e92b5d07338d4f0ba0981dffed17c48976ca4730 # v2.2.3
         with:
           scan-args: |-
             --lockfile=package-lock.json
             --format=table
-        continue-on-error: true
-
-      - name: Socket Security Scan
-        uses: socketdev/socket-security-action@v1
-        with:
-          issue-comment: true
-          issue-label: "dependencies"
         continue-on-error: true
 
       - name: Run security audit
