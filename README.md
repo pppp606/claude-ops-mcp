@@ -196,6 +196,17 @@ Local MCP config examples:
 - `.mcp.example.json` (generic MCP client)
 - `claude_desktop_config.example.json` (Claude Desktop)
 
+## Dependency Management
+
+This repository consolidates dependency updates and security checks to keep CI signal clean:
+
+- Weekly npm updates: single PR grouping all patch/minor updates; majors ignored by default
+- Monthly GitHub Actions updates: single PR grouping all actions
+- PR-time Dependency Review: blocks introducing known vulnerabilities (requires Dependency graph enabled)
+- CI `npm audit`: production dependencies only, threshold `moderate`
+
+See `docs/dependency-management.md` for details and how to adjust thresholds and schedules.
+
 ## Roadmap
 
 This project targets the goals described in issue #1:
