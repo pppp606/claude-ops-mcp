@@ -3,7 +3,7 @@
 
 version: 2
 updates:
-  # npm dependencies
+  # npm: weekly, single PR, patch/minor only
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -11,28 +11,40 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Tokyo"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 1
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     groups:
-      development-dependencies:
-        dependency-type: "development"
+      all-patch-minor:
         patterns:
           - "*"
+        update-types:
+          - "patch"
+          - "minor"
     labels:
       - "dependencies"
       - "automated"
     commit-message:
       prefix: "chore"
-      prefix-development: "chore"
       include: "scope"
+    reviewers:
+      - "pppp606"
 
-  # GitHub Actions
+  # GitHub Actions: monthly, single PR
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
       day: "monday"
       time: "09:00"
       timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 1
+    groups:
+      all-actions:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "github-actions"
