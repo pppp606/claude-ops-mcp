@@ -1,6 +1,9 @@
+# Dependabot configuration for automated dependency updates
+# See: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
 version: 2
 updates:
-  # Enable version updates for npm
+  # npm dependencies
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -8,59 +11,32 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Tokyo"
-    open-pull-requests-limit: 5
-    reviewers:
-      - "pppp606"
-    assignees:
-      - "pppp606"
-    commit-message:
-      prefix: "deps"
-      include: "scope"
-    labels:
-      - "dependencies"
-      - "automated"
-    # Group development dependencies for easier management
+    open-pull-requests-limit: 10
     groups:
       development-dependencies:
         dependency-type: "development"
         patterns:
-          - "@types/*"
-          - "eslint*"
-          - "@typescript-eslint/*"
-          - "prettier"
-          - "jest"
-          - "ts-jest"
-      types:
-        patterns:
-          - "@types/*"
-      linting:
-        patterns:
-          - "eslint*"
-          - "@typescript-eslint/*"
-          - "prettier"
-      testing:
-        patterns:
-          - "jest"
-          - "ts-jest"
-          - "@types/jest"
+          - "*"
+    labels:
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
 
-  # GitHub Actions updates with SHA pinning support
+  # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
       day: "monday"
       time: "09:00"
       timezone: "Asia/Tokyo"
-    open-pull-requests-limit: 3
-    reviewers:
-      - "pppp606"
-    assignees:
-      - "pppp606"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automated"
     commit-message:
       prefix: "ci"
       include: "scope"
-    labels:
-      - "github-actions"
-      - "automated"
-      - "security"
