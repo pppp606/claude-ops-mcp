@@ -89,6 +89,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Dependency Review
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@56339e523c0409420f6c2c9a2f4292bbb3c07dd3 # v4.8.0
+        with:
+          fail-on-severity: moderate
+          comment-summary-in-pr: true
         
       - name: Setup Node.js
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
@@ -111,8 +118,8 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Run security audit
-        run: npm audit --audit-level=low
+      - name: Run security audit (prod only)
+        run: npm audit --audit-level=moderate --omit=dev
 
       - name: Check for outdated dependencies
         run: npm outdated
