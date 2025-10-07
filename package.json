@@ -32,6 +32,24 @@
   ],
   "author": "Yuki Tanaka",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pppp606/claude-ops-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pppp606/claude-ops-mcp/issues"
+  },
+  "homepage": "https://github.com/pppp606/claude-ops-mcp#readme",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map",
+    "dist/**/*.js.map",
+    "!dist/**/*.test.*",
+    "!dist/**/__tests__",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=18.0.0"
   },
