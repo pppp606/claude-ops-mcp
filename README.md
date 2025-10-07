@@ -224,4 +224,3 @@ This project targets the goals described in issue #1:
 ## License
 
 MIT
-# claude-ops-mcp
