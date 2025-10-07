@@ -1,0 +1,43 @@
+# Source files
+src/
+*.ts
+!*.d.ts
+
+# Tests
+tests/
+__tests__/
+*.test.ts
+*.spec.ts
+*.test.js
+*.test.d.ts
+*.test.d.ts.map
+*.test.js.map
+coverage/
+
+# Configuration files
+tsconfig.json
+jest.config.js
+.eslintrc.*
+.prettierrc.*
+.prettierignore
+
+# CI/CD
+.github/
+
+# Development
+.vscode/
+.idea/
+*.log
+npm-debug.log*
+.DS_Store
+
+# Environment
+.env
+.env.*
+
+# Build artifacts
+*.tgz
+
+# Documentation (keep only README.md)
+docs/
+CONTRIBUTING.md
