@@ -2,11 +2,11 @@
 
 MCP server that indexes Claude Code operation history (file edits/writes, Bash runs, reads) from local Claude Desktop logs and exposes it as queryable tools. Designed to help agents inspect what happened, generate diffs, and assist with rollback or failure analysis.
 
-Status: early preview. Planned to be published to npm; for now, install from source.
+Status: early preview. Available on npm.
 
 ## Features
 
-- Operation history indexing: parses Claude Desktop JSONL session logs under `~/.claude/projects/*`.
+- Operation history indexing: parses Claude Code JSONL session logs under `~/.claude/projects/*`.
 - File-change queries: list recent creates/updates/deletes for any file or glob-like pattern.
 - Bash history: list commands with summaries, then drill down to stdout/stderr details.
 - Diff views: retrieve detailed diffs for Edit/Write/MultiEdit operations in a unified format.
@@ -15,7 +15,7 @@ Status: early preview. Planned to be published to npm; for now, install from sou
 
 ## How It Works
 
-- Claude Desktop writes session logs per project at `~/.claude/projects/<projectHash>/<sessionId>.jsonl`.
+- Claude Code writes session logs per project at `~/.claude/projects/<projectHash>/<sessionId>.jsonl`.
 - When this server initializes, it emits a session UID and can later resolve the correct session using the tool-use id (`_meta["claudecode/toolUseId"]`) that Claude passes to MCP tools.
 - Handlers parse the JSONL log stream, map operations to a compact index (`OperationIndex`), and provide detailed diffs on demand.
 - Supported MCP protocol version: `2024-11-05`.
@@ -23,17 +23,17 @@ Status: early preview. Planned to be published to npm; for now, install from sou
 ## Requirements
 
 - Node.js >= 18
-- Claude Desktop (or another MCP client) running on the same machine
+- Claude Code (or another MCP client) running on the same machine
 
 ## Installation
 
-Planned npm distribution:
+From npm (recommended):
 
 ```bash
-npm install -g claude-ops-mcp   # not yet published
+npm install -g claude-ops-mcp
 ```
 
-From source (current way):
+From source:
 
 ```bash
 git clone https://github.com/pppp606/claude-ops-mcp.git
@@ -42,9 +42,9 @@ npm ci
 npm run build
 ```
 
-## Configure With Claude Desktop
+## Configure With Claude Code
 
-Option A — after global npm install (once published):
+Option A — after global npm install:
 
 ```json
 {
@@ -58,7 +58,7 @@ Option A — after global npm install (once published):
 }
 ```
 
-Option B — from this repo’s build (today):
+Option B — from source (for development):
 
 ```json
 {
@@ -72,7 +72,7 @@ Option B — from this repo’s build (today):
 }
 ```
 
-Place the JSON into Claude Desktop’s MCP configuration (see your Claude version’s docs). A minimal generic `.mcp.json` entry for other clients is provided in `.mcp.example.json`.
+Place the JSON into Claude Code's `.mcp.json` configuration file in your project root. See the [Claude Code MCP documentation](https://docs.claude.com/en/docs/claude-code/mcp) for details. A minimal example is also provided in `.mcp.example.json`.
 
 ## Available Tools
 
@@ -193,8 +193,8 @@ npm run ci           # typecheck + lint + coverage + build
 
 Local MCP config examples:
 
-- `.mcp.example.json` (generic MCP client)
-- `claude_desktop_config.example.json` (Claude Desktop)
+- `.mcp.example.json` (Claude Code / generic MCP client)
+- `claude_desktop_config.example.json` (for reference only)
 
 ## Dependency Management
 
